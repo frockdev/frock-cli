@@ -1,0 +1,79 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$ref":"#/$defs/Frock","$defs":{"ChartRemote":{"properties":{"chartUrl":{"type":"string"},"version":{"type":"string"},"chartName":{"type":"string"}},"additionalProperties":false,"type":"object","required":["chartUrl","version","chartName"]},"Command":{"properties":{"signature":{"type":"string"},"type":{"type":"string","enum":["artisan","frock-tool","composer","raw"]},"description":{"type":"string"},"command":{"type":"string"}},"additionalProperties":false,"type":"object","required":["signature","type","description","command"]},"DevelopmentPackage":{"properties":{"sshLink":{"type":"string"},"devName":{"type":"string"},"branch":{"type":"string"}},"additionalProperties":false,"type":"object","required":["sshLink","devName","branch"]},"Frock":{"properties":{"projectName":{"type":"string"},"commands":{"items":{"$ref":"#/$defs/Command"},"type":"array"},"developmentPackages":{"items":{"$ref":"#/$defs/DevelopmentPackage"},"type":"array"},"developerName":{"type":"string"},"synchronizedTools":{"items":{"$ref":"#/$defs/SynchronizedTool"},"type":"array"},"helmCharts":{"$ref":"#/$defs/HelmChart"}},"additionalProperties":false,"type":"object","required":["projectName"]},"HelmChart":{"oneOf":[{"required":["chartDir","chartRemote"],"title":"chartType"}],"properties":{"chartDir":{"type":"string"},"chartRemote":{"$ref":"#/$defs/ChartRemote"}},"additionalProperties":false,"type":"object","required":["chartDir","chartRemote"]},"MovePath":{"properties":{"from":{"type":"string"},"to":{"type":"string"}},"additionalProperties":false,"type":"object","required":["from","to"]},"SynchronizedTool":{"properties":{"link":{"type":"string"},"name":{"type":"string"},"version":{"type":"string"},"excludePaths":{"items":{"type":"string"},"type":"array"},"movePaths":{"items":{"$ref":"#/$defs/MovePath"},"type":"array"},"gitignore":{"items":{"type":"string"},"type":"array"}},"additionalProperties":false,"type":"object","required":["link","name","version"]}}}           },
+                "commands": {
+                    "items": {
+                        "$ref": "#/$defs/Command"
+                    },
+                    "type": "array"
+                },
+                "developmentPackages": {
+                    "items": {
+                        "$ref": "#/$defs/DevelopmentPackage"
+                    },
+                    "type": "array"
+                },
+                "developerName": {
+                    "type": "string"
+                },
+                "synchronizedTools": {
+                    "items": {
+                        "$ref": "#/$defs/SynchronizedTool"
+                    },
+                    "type": "array"
+                },
+                "helmCharts": {
+                    "$ref": "#/$defs/HelmChart"
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+                "projectName"
+            ]
+        },
+        "HelmChart": {
+            "oneOf": [
+                {
+                    "required": [
+                        "chartDir",
+                        "chartRemote"
+                    ],
+                    "title": "chartType"
+                }
+            ],
+            "properties": {
+                "chartDir": {
+                    "type": "string"
+                },
+                "chartRemote": {
+                    "$ref": "#/$defs/ChartRemote"
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+                "chartDir",
+                "chartRemote"
+            ]
+        },
+        "SynchronizedTool": {
+            "properties": {
+                "link": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+                "link",
+                "name",
+                "version"
+            ]
+        }
+    }
+}
