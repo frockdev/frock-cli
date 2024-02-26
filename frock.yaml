@@ -8,8 +8,8 @@ commands:
 
 synchronizedTools:
     - link: "https://github.com/nixys/nxs-universal-chart.git"
-      name: "nxs-universal-chart"
-      version: "v2.5.1"
+      name: "chart"
+      version: "v2.5.0"
       excludePaths:
           - docs
           - .gitlab-ci.yml
