@@ -2,8 +2,11 @@
 
 namespace App\Modules\ProjectConfig;
 
+use App\Modules\ConfigObjects\ChartLocal;
+use App\Modules\ConfigObjects\ChartRemote;
 use App\Modules\ConfigObjects\Command;
 use App\Modules\ConfigObjects\CopyPath;
+use App\Modules\ConfigObjects\Deploy;
 use App\Modules\ConfigObjects\DevelopmentPackage;
 use App\Modules\ConfigObjects\MovePath;
 use App\Modules\ConfigObjects\SynchronizedTool;
@@ -21,6 +24,24 @@ class Config
      * @var mixed|string
      */
     private string $devImage;
+
+    private function readEnvVariables() {
+        $variables = [
+            'NAMESPACE',
+            'APP_ENV',
+            'CHART_VERSION',
+            'APP_VERSION'
+        ];
+        foreach ($variables as $variable) {
+            if (getenv($variable)) {
+                echo "Using $variable from environment: ".getenv($variable)."\n";
+            }
+        }
+    }
+
+    public function getAppEnv() {
+        return getenv('APP_ENV') ?? $this->config['deploy']['appEnvironment'];
+    }
 
     public function __construct()
     {
@@ -90,6 +111,7 @@ class Config
                 movePaths: $movePaths,
                 gitignore: $tool['gitignore'] ?? [],
                 copyPaths: $copyPaths,
+                onlyPaths: $tool['onlyPaths'] ?? []
             );
         }
         return $result;
@@ -143,8 +165,63 @@ class Config
         return $this->helmChartRepository;
     }
 
+    public function getDeployConfig(): Deploy {
+        if ($this->config['deploy']['chartRemote']) {
+            return new Deploy(
+                namespace: $this->getNamespace(),
+                appEnvironment: $this->getAppEnv(),
+                kubectlExecCommand: $this->getKubectlExecCommand(),
+                kubectlDebugCommand: $this->getKubectlDebugCommand(),
+                chartLocal: null,
+                chartRemote: new ChartRemote(
+                    $this->config['deploy']['chartRemote']['repoUrl'],
+                    $this->config['deploy']['chartRemote']['version'],
+                    $this->config['deploy']['chartRemote']['chartName']
+                ),
+                valuesByEnv: $this->config['deploy']['valuesByEnv'] ?? $this->getWorkingDir().'/values'
+            );
+        } else {
+            return new Deploy(
+                namespace: $this->getNamespace(),
+                appEnvironment: $this->getAppEnv(),
+                kubectlExecCommand: $this->getKubectlExecCommand(),
+                kubectlDebugCommand: $this->getKubectlDebugCommand(),
+                chartLocal: new ChartLocal(
+                    chartPath: $this->getWorkingDir().'/'.$this->config['deploy']['chartLocal']['chartPath'],
+                    appVersion: $this->getAppVersion(),
+                    chartVersion: $this->getChartVersion(),
+                ),
+                chartRemote: null,
+                valuesByEnv: $this->config['deploy']['valuesByEnv'] ?? $this->getWorkingDir().'/values'
+            );
+        }
+    }
+
+    public function getChartVersion() {
+        return getenv('CHART_VERSION') ?? null;
+    }
+
+    public function getAppVersion() {
+        return getenv('APP_VERSION') ?? null;
+    }
+
     public function getDevImage(): string
     {
         return $this->devImage;
+    }
+
+    public function getKubectlExecCommand()
+    {
+        return $this->config['deploy']['kubectlExecCommand'] ?? 'kubectl exec -n '.$this->getNamespace().' -it $(kubectl get pods -l kubectlExec=true -o jsonpath="{.items[0].metadata.name}") -- /bin/bash -c "cd /var/www/php && ';
+    }
+
+    public function getKubectlDebugCommand()
+    {
+        return $this->config['deploy']['kubectlDebugCommand'] ?? 'kubectl exec -n '.$this->getNamespace().' -it $(kubectl get pods -l kubectlExec=true -o jsonpath="{.items[0].metadata.name}") -- /bin/bash -c "cd /var/www/php && export XDEBUG_MODE=debug && export XDEBUG_SESSION=PHPSTORM && ';
+    }
+
+    public function getNamespace()
+    {
+        return getenv('NAMESPACE') ?? $this->config['deploy']['namespace'] ?? $this->getProjectName().'-ns';
     }
 }
