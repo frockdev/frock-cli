@@ -82,7 +82,7 @@ class Config
             foreach ($tool['copyPaths'] ?? [] as $copyPath) {
                 $copyPaths[] = new CopyPath($copyPath['from'], $copyPath['to']);
             }
-            $result[] = new SynchronizedTool(
+            $result[$tool['name']] = new SynchronizedTool(
                 link: $tool['link'],
                 name: $tool['name'],
                 version: $tool['version'],
@@ -93,6 +93,19 @@ class Config
             );
         }
         return $result;
+    }
+
+    public function setNewSynchronizedToolsetVersion(string $toolName, string $newVersion): void {
+
+        foreach ($this->config['synchronizedTools'] as &$tool) {
+            if ($tool['name'] === $toolName) {
+                $tool['version'] = $newVersion;
+                $yaml = Yaml::dump($this->config, 8, 2);
+                file_put_contents(getcwd().'/frock.yaml', $yaml);
+                return;
+            }
+        }
+
     }
 
     private function readOverridenConfig()
