@@ -30,7 +30,8 @@ class Config
             'NAMESPACE',
             'APP_ENV',
             'CHART_VERSION',
-            'APP_VERSION'
+            'APP_VERSION',
+            'DEVELOPER_NAME',
         ];
         foreach ($variables as $variable) {
             if (getenv($variable)) {
@@ -39,8 +40,12 @@ class Config
         }
     }
 
+    public function getDeveloperName() {
+        return getenv('DEVELOPER_NAME') ?: $this->config['developerName'];
+    }
+
     public function getAppEnv() {
-        return getenv('APP_ENV') ?? $this->config['deploy']['appEnvironment'];
+        return getenv('APP_ENV') ?: $this->config['deploy']['appEnvironment'];
     }
 
     public function __construct()
@@ -198,11 +203,11 @@ class Config
     }
 
     public function getChartVersion() {
-        return getenv('CHART_VERSION') ?? null;
+        return getenv('CHART_VERSION') ?: null;
     }
 
     public function getAppVersion() {
-        return getenv('APP_VERSION') ?? null;
+        return getenv('APP_VERSION') ?: null;
     }
 
     public function getDevImage(): string
@@ -222,6 +227,6 @@ class Config
 
     public function getNamespace()
     {
-        return getenv('NAMESPACE') ?? $this->config['deploy']['namespace'] ?? $this->getProjectName().'-ns';
+        return getenv('NAMESPACE') ?: ($this->config['deploy']['namespace'] ?? $this->getProjectName().'-ns');
     }
 }

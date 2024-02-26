@@ -7,21 +7,21 @@ commands:
         description: 'just echo valera'
 synchronizedTools:
     -
-        link: 'https://github.com/nixys/nxs-universal-chart.git'
+        link: 'git@github.com:frockdev/app-chart.git'
         name: chart
-        version: v2.5.1
+        version: v0.0.165
         excludePaths:
-            - docs
-            - .gitlab-ci.yml
-            - CHANGELOG.md
-            - LICENSE
-            - README.md
-            - values.yaml
             - .git
             - .github
         copyPaths:
             -
-                from: Chart.yaml
-                to: Chart.example.yaml
+                from: Chart.example.yaml
+                to: Chart.yaml
         gitignore:
             - Chart.yaml
+deploy:
+    appEnvironment: local
+    chartLocal:
+        chartPath: chart-synchronized-tool
+
+developerName: VladimirZakotnev

@@ -7,6 +7,14 @@ use App\Modules\ProjectConfig\Config;
 
 class SynchronizedToolsManager
 {
+
+    private Config $config;
+
+    public function __construct(Config $config)
+    {
+        $this->config = $config;
+    }
+
     /**
      * // find all folders in current cwd()
      * // if folder ends with -frock-tool
@@ -24,6 +32,59 @@ class SynchronizedToolsManager
 
     public function cleanToolByName(string $name) {
         shell_exec('rm -rf ' . getcwd().'/'.$name.'-synchronized-tool');
+    }
+
+    /**
+     * @param SynchronizedTool $tool
+     * @return void
+     */
+    public function push(SynchronizedTool $tool)
+    {
+        try {
+            $copiedToolDir = $this->config->getWorkingDir() . '/' . $tool->name . '-copied-synchronized-tool';
+            shell_exec('rm -rf ' . $copiedToolDir);
+            shell_exec('cp -r ' . $this->config->getWorkingDir() . '/' . $tool->name . '-synchronized-tool' . ' ' . $copiedToolDir);
+            $tmpToolDir = $this->config->getWorkingDir() . '/' . $tool->name . '-tmp-synchronized-tool';
+            shell_exec('rm -rf ' . $tmpToolDir);
+            $git = new \CzProject\GitPhp\Git;
+            $repo = $git->cloneRepository($tool->link, $tmpToolDir);
+            $repo->checkout($tool->version);
+
+            //move back
+            foreach ($tool->movePaths as $movePath) {
+                shell_exec('mv ' . $copiedToolDir . '/' . $movePath->to . ' ' . $copiedToolDir . '/' . $movePath->from);
+            }
+
+            //copy back. simply remove copies
+            foreach ($tool->copyPaths as $copyPath) {
+                shell_exec('rm -rf ' . $copiedToolDir . '/' . $copyPath->to);
+            }
+
+            //restore .gitignore
+            $gitignore = file($copiedToolDir . '/.gitignore', FILE_IGNORE_NEW_LINES);
+            $gitignore = array_reverse($gitignore);
+            $gitignoreLines = array_reverse($tool->gitignore);
+            foreach ($gitignore as $key=>$line) {
+                if (in_array($line, $gitignoreLines)) {
+                    unset($gitignoreLines[array_search($line, $gitignoreLines)]);
+                    unset($gitignore[$key]);
+                }
+            }
+            $gitignore = array_reverse($gitignore);
+            file_put_contents($copiedToolDir . '/.gitignore', implode("\n", $gitignore));
+
+            $this->copyFiles($copiedToolDir, $tmpToolDir);
+
+            $repo->addAllChanges('.');
+            $branchName = 'changes-' . $tool->version . '-by-' . $this->config->getDeveloperName();
+            $repo->createBranch($branchName, true);
+            $repo->commit('Changes by ' . $this->config->getDeveloperName());
+            $repo->push($branchName, ['--force-with-lease', '--set-upstream', 'origin']);
+        } finally {
+            shell_exec('rm -rf ' . $copiedToolDir);
+            shell_exec('rm -rf ' . $tmpToolDir);
+        }
+
     }
 
     public function installTool(SynchronizedTool $tool) {
@@ -209,4 +270,29 @@ class SynchronizedToolsManager
         }
         return $this->findHighestPatchTag($tags, $highestMinoredVersion);
     }
+
+    /**
+     * @param string $copiedToolDir
+     * @param string $tmpToolDir
+     * @return void
+     * // after that we take each file recursively in $copiedToolDir directory and copy it to the $tmpToolDir
+     * //  if file already exists in $tmpToolDir we remove it
+     */
+    private function copyFiles(string $copiedToolDir, string $tmpToolDir)
+    {
+        $files = scandir($copiedToolDir);
+        foreach ($files as $file) {
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
+            if (is_dir($copiedToolDir.'/'.$file)) {
+                $this->copyFiles($copiedToolDir.'/'.$file, $tmpToolDir.'/'.$file);
+            } else {
+                shell_exec('rm -rf '.$tmpToolDir.'/'.$file);
+                shell_exec('cp '.$copiedToolDir.'/'.$file.' '.$tmpToolDir.'/'.$file);
+            }
+        }
+    }
+
+
 }
