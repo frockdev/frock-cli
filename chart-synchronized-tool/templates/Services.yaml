@@ -1,0 +1,51 @@
+{{ range $key, $app := .Values.applications }}
+{{if not (eq $app.disabled true )}}
+{{if $app.networking }}
+{{ range $networking := $app.networking }}
+apiVersion: v1
+kind: Service
+metadata:
+  {{ if $networking.portNumber }}
+  name: {{ $app.name }}-{{ $.Values.projectName }}-{{$networking.portNumber}}-svc
+  {{else}}
+  name: {{ $app.name }}-{{ $.Values.projectName }}-{{$networking.transportType}}-svc
+  {{end}}
+
+spec:
+  selector:
+    app: {{ $app.name }}-{{ $.Values.projectName }}
+  {{ if $networking.portNumber }}
+  ports:
+    - port: {{ $networking.portNumber }}
+      targetPort: {{ $networking.portNumber }}
+      protocol: "TCP"
+      name: port-{{ $networking.portNumber }}
+  {{else}}
+  {{ if eq $networking.transportType "http-rpc" }}
+  ports:
+    - port: 8082
+      targetPort: 8082
+      protocol: "TCP"
+      name: port-8082
+  {{ end }}
+  {{ if eq $networking.transportType "http" }}
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: "TCP"
+      name: port-8080
+  {{ end }}
+  {{ if eq $networking.transportType "grpc" }}
+  ports:
+    - port: 9090
+      targetPort: 9090
+      protocol: "TCP"
+      name: port-9090
+  {{ end }}
+   {{end}}
+
+---
+{{end}}
+{{ end }}
+{{ end }}
+{{ end }}

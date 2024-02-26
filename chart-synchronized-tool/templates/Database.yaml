@@ -1,0 +1,44 @@
+{{ range $db := .Values.postgres }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-{{ $db.name }}-{{ $.Values.projectName }}
+  labels:
+    app: db-{{ $db.name }}-{{ $.Values.projectName }}
+spec:
+  selector:
+    matchLabels:
+      app: db-{{ $db.name }}-{{ $.Values.projectName }}
+  template:
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: {{ $db.name }}
+            - name: POSTGRES_PASSWORD
+              value: {{ $db.name }}
+            - name: POSTGRES_DB
+              value: {{ $db.name }}
+    metadata:
+      labels:
+        app: db-{{ $db.name }}-{{ $.Values.projectName }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-{{ $db.name }}-{{ $.Values.projectName }}
+  labels:
+    app: db-{{ $db.name }}-{{ $.Values.projectName }}
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: db-{{ $db.name }}-{{ $.Values.projectName }}
+
+{{end}}

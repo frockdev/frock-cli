@@ -1,0 +1,80 @@
+{{ range $appIndex, $app := .Values.applications }}
+{{if $app.networking }}
+{{ range $networking := $app.networking }}
+{{ if eq $networking.type "ingress" }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: {{ $.Values.ingressClassName | default "nginx" }}
+    {{ range $annotationKey, $annotation := $app.commonIngressAnnotations }}
+    {{ $annotation.name | quote }}: {{ $annotation.value | quote }}
+    {{end}}
+    {{- if eq $networking.transportType "grpc" }}
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+    {{- end }}
+  name: {{$app.name}}-{{ $.Values.projectName }}-{{$networking.host}}
+
+spec:
+{{/*  ingressClassName: {{ $.Values.ingressClassName | default "nginx" }}*/}}
+  rules:
+    - host: {{ $.Values.hostPrefix }}{{ $networking.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                {{ if $networking.portNumber }}
+                name: {{ $app.name }}-{{ $.Values.projectName }}-{{ $networking.portNumber }}-svc
+                {{else}}
+                name: {{ $app.name }}-{{ $.Values.projectName }}-{{ $networking.transportType }}-svc
+                {{end}}
+                port:
+                  {{ if $networking.portNumber }}
+                  number: {{ $networking.portNumber }}
+                  {{ else }}
+                    {{ if eq $networking.transportType "grpc" }}
+                  number: 9090
+                    {{else}}
+                      {{ if eq $networking.transportType "http" }}
+                  number: 8080
+                      {{else}}
+                    {{ if eq $networking.transportType "http-rpc" }}
+                  number: 8082
+                        {{end}}
+                      {{end}}
+                    {{end}}
+                  {{end}}
+
+---
+{{end}}
+{{end}}
+{{end}}
+
+{{ if $.Values.ngrok }}
+{{ if (eq $.Values.ngrok.applicationName $app.name) }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{$app.name}}-{{ $.Values.projectName }}-ngrok
+spec:
+  ingressClassName: ngrok
+  rules:
+  {{ range $index, $entrypoint := $app.entrypoints}}
+    - host: {{ $.Values.ngrok.domain }}
+      http:
+        paths:
+            {{ range $entrypoint.paths }}
+          - path: /
+            pathType: {{ .pathType | default "Prefix" }}
+            backend:
+              service:
+                name: {{ $app.name }}-{{ $.Values.projectName }}-svc
+                port:
+                  number: 8080
+            {{ end}}
+    {{ end}}
+{{ end }}
+{{ end }}
+{{ end }}

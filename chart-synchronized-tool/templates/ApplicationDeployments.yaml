@@ -1,0 +1,164 @@
+{{ range $key, $app := .Values.applications }}
+{{if not (eq $app.disabled true )}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $app.name }}-{{ $.Values.projectName }}-depl
+  labels:
+    app: {{ $app.name }}-{{ $.Values.projectName }}
+
+    {{- if $app.containerForDeveloper }}
+    containerForDeveloper: {{ $app.containerForDeveloper | quote }}
+    {{- end }}
+spec:
+  replicas: {{ $app.replicas | default 1 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: {{ $app.name }}-{{ $.Values.projectName }}
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/scheme: "http"
+        prometheus.io/port: "9502"
+      labels:
+        app: {{ $app.name }}-{{ $.Values.projectName }}
+        {{- if $app.containerForDeveloper }}
+        containerForDeveloper: {{ $app.containerForDeveloper | quote }}
+        {{- end }}
+    spec:
+      volumes:
+        {{ if $app.containerForDeveloper }}
+        - name: devspace-restart-helper
+          configMap:
+            name: {{ $.Values.projectName }}-{{ $app.name }}-restart-helper
+            defaultMode: 0777
+        - name: local-files
+          hostPath:
+            path: {{ $.Values.localProjectDirectory }}
+            type: Directory
+        {{ end }}
+      {{ if $.Values.customDns }}
+      dnsConfig:
+        nameservers:
+          {{- range $.Values.customDns }}
+          - {{ . }}
+          {{end}}
+      {{end}}
+      {{ if not (eq $.Values.imagePullCredentials.registry "empty.empty") }}
+      imagePullSecrets:
+        - name: registry-secret
+      {{ end }}
+      containers:
+        - name: {{ $app.name }}-{{ $.Values.projectName }}
+          {{ if $app.resources }}
+          resources:
+            requests:
+              {{ if $app.resources.cpuMillis }}
+              cpu: "{{ $app.resources.cpuMillis }}m"
+              {{end}}
+              {{ if $app.resources.memoryMegabytes }}
+              memory: "{{ $app.resources.memoryMegabytes }}Mi"
+              {{end}}
+            {{ if or $app.resources.cpuMillisLimit $app.resources.memoryMegabytesLimit }}
+            limits:
+              {{ if $app.resources.cpuMillisLimit }}
+              cpu: "{{ $app.resources.cpuMillisLimit }}m"
+              {{end}}
+              {{ if $app.resources.memoryMegabytesLimit }}
+              memory: "{{ $app.resources.memoryMegabytesLimit }}Mi"
+              {{end}}
+            {{end}}
+          {{end}}
+            {{ if $app.containerForDeveloper}}
+          command: ["/.devspace/devspace-restart-helper"]
+          args:
+            {{- range $app.command }}
+            - {{ . }}
+            {{- end }}
+            {{- range $app.arguments }}
+            - {{ . }}
+            {{- end }}
+              {{else}}
+            {{ if $app.command }}
+          command:
+            {{- range $app.command }}
+            - {{ . }}
+            {{- end }}
+          {{end}}
+          {{ if $app.arguments }}
+          args:
+            {{- range $app.arguments }}
+            - {{ . }}
+            {{- end }}
+          {{end}}
+          {{end}}
+            {{ if $app.imageTag }}
+          image: {{ $app.image }}:{{ $app.imageTag }}
+            {{ else }}
+          image: {{ $app.image }}:{{ $.Values.ciAppTag }}
+            {{ end }}
+          env:
+            - name: APP_MODE
+              value: {{ $app.appType }}
+            - name: APP_NAME
+              value: {{ $.Values.projectName }}
+            - name: PHP_IDE_CONFIG
+              value: "serverName={{ $app.name }}-{{ $.Values.projectName }}"
+            - name: XDEBUG_CONFIG
+              value: "client_host={{ $.Values.xdebugHost }}"
+          {{ if $.Values.commonAdditionalEnv }}
+          {{ range $envKey, $envValue := $.Values.commonAdditionalEnv }}
+            - name: {{ $envKey }}
+              value: {{ $envValue | quote }}
+          {{end}}
+          {{end}}
+          {{if eq $.Values.vaultEnabled true }}
+          envFrom:
+            - secretRef:
+                name: {{ $app.name }}-{{ $.Values.projectName }}-vault-secret
+          {{end}}
+          ports:
+            - containerPort: 9512
+              protocol: "TCP"
+            - containerPort: 9502
+              protocol: "TCP"
+          {{ if $.Values.disableAllProbes }}
+          {{else}}
+          readinessProbe:
+            failureThreshold: 2
+            periodSeconds: 3
+            initialDelaySeconds: 3
+            successThreshold: 3
+            httpGet:
+              port: 9512
+              path: "/liveness"
+          livenessProbe:
+            failureThreshold: 3
+            periodSeconds: 10
+            initialDelaySeconds: 10
+            successThreshold: 1
+            httpGet:
+              port: 9512
+              path: "/liveness"
+          {{ end }}
+          volumeMounts:
+            {{ if $app.containerForDeveloper }}
+            - name: local-files
+              mountPath: /var/www
+            - mountPath: /.devspace/devspace-restart-helper
+              name: devspace-restart-helper
+              subPath: restart.sh
+            - mountPath: /.devspace/start
+              name: devspace-restart-helper
+              subPath: restart.sh
+            {{ end }}
+---
+{{ end }}
+{{end}}

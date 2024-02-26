@@ -1,0 +1,16 @@
+{{if eq .Values.vaultEnabled true }}
+{{ range $key, $app := .Values.applications }}
+{{if not (eq $app.disabled true )}}
+apiVersion: "koudingspawn.de/v1"
+kind: Vault
+metadata:
+  name: {{ $app.name }}-{{ $.Values.projectName }}-vault-secret
+spec:
+  path: "{{ $.Values.applicationEnv }}/{{ $.Values.projectName }}-{{ $.Values.applicationEnv }}"
+  type: "KEYVALUEV2"
+  changeAdjustmentCallback:
+    type: deployment
+    name: {{ $app.name }}-{{ $.Values.projectName }}-depl
+{{- end }}
+{{- end }}
+{{- end }}

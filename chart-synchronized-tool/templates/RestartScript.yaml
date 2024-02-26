@@ -1,0 +1,110 @@
+{{ range $key, $app := .Values.applications }}
+{{ if $app.containerForDeveloper }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ $.Values.projectName }}-{{ $app.name }}-restart-helper
+data:
+  restart.sh: |-
+    #!/bin/sh
+    #
+    # DevSpace Restart Helper
+    #
+      set -e
+
+      restart=true
+      screenSessionName="devspace"
+      workDir="$PWD"
+      tmpDir="/.devspace"
+      screenLogFile="$tmpDir/screenlog.0"
+      pidFile="$tmpDir/devspace-pid"
+      sidFile="$tmpDir/devspace-sid"
+      touchFile="$tmpDir/start"
+
+      mkdir -p $tmpDir
+
+      trap quit TERM INT
+      quit() {
+        restart=false
+        if [ -f "$pidFile" ]; then
+        pidToKill="$(cat $pidFile)"
+        kill -2 $((0-$pidToKill)) >/dev/null 2>&1
+        timeout 5 sh -c "while [ -e /proc/$pidToKill ]; do sleep 1; done"
+        kill -15 $((0-$pidToKill)) >/dev/null 2>&1
+        timeout 5 sh -c "while [ -e /proc/$pidToKill ]; do sleep 1; done"
+        kill -9 $((0-$pidToKill)) >/dev/null 2>&1
+        timeout 5 sh -c "while [ -e /proc/$pidToKill ]; do sleep 1; done"
+        fi
+
+        if [ -f "$ppidFile" ]; then
+        pidToKill="$(cat $ppidFile)"
+        kill -9 $((0-$pidToKill)) >/dev/null 2>&1
+        fi
+      }
+
+      counter=0
+      while ! [ -f $touchFile ]; do
+      if [ "$counter" = "0" ]; then
+      echo "Container started with restart helper."
+      echo "Waiting for initial sync to complete or file $touchFile to exist before starting the application..."
+      else
+      if [ "$counter" = 10 ]; then
+      echo "(Still waiting...)"
+      counter=0
+      fi
+      fi
+      sleep 1
+      counter=$((counter + 1))
+      done
+
+      if ! [ "$counter" = "0" ]; then
+      echo "Starting application..."
+      fi
+
+      while $restart; do
+      set +e
+      if command -v screen >/dev/null; then
+      rm -f "$screenLogFile"
+      rm -f "$pidFile"
+      rm -f "$sidFile"
+
+      cd "$tmpDir"
+
+      screen -q -L -dmS $screenSessionName sh -c 'echo $$>"'$pidFile'"; echo $PPID>"'$sidFile'"; cd "'$workDir'"; exec "$@"; exit;' _ "$@"
+
+      while [ ! -f "$sidFile" ]; do
+      sleep 0.1
+      done
+      sid="$(cat $sidFile).${screenSessionName}"
+      pid="$(cat $pidFile)"
+
+      screen -q -S "${sid}" -X colon "logfile flush 1^M"
+
+      tail -f "$screenLogFile" &
+      tailPid=$!
+      # This is a workaround on tail --pid not supported in all
+      # minimal shells
+      while [ -e /proc/$pid ]; do
+      # Until $pid exist, let's wait
+      sleep 1
+      done
+      kill $tailPid
+      else
+      setsid "$@" &
+      pid=$!
+      echo "$pid" >"$pidFile"
+      wait "$pid"
+      fi
+      set -e
+
+      if $restart; then
+      if [ -f "$pidFile" ]; then
+      rm -f "$pidFile"
+      printf "\nContainer exited. Will restart in 7 seconds...\n"
+      sleep 7
+      fi
+      printf "\n\n############### Restart container ###############\n\n"
+      fi
+      done
+{{end}}
+{{end}}
