@@ -100,7 +100,7 @@ class Config
         foreach ($this->config['synchronizedTools'] as &$tool) {
             if ($tool['name'] === $toolName) {
                 $tool['version'] = $newVersion;
-                $yaml = Yaml::dump($this->config, 8, 2);
+                $yaml = Yaml::dump($this->config, 8, 4, Yaml::DUMP_MULTI_LINE_LITERAL_BLOCK);
                 file_put_contents(getcwd().'/frock.yaml', $yaml);
                 return;
             }

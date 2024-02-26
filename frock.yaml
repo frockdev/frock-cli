@@ -1,27 +1,27 @@
 projectName: frock
 commands:
-  -
-    command: 'echo valera'
-    signature: valera
-    type: raw
-    description: 'just echo valera'
+    -
+        command: 'echo valera'
+        signature: valera
+        type: raw
+        description: 'just echo valera'
 synchronizedTools:
-  -
-    link: 'https://github.com/nixys/nxs-universal-chart.git'
-    name: chart
-    version: v2.5.1
-    excludePaths:
-      - docs
-      - .gitlab-ci.yml
-      - CHANGELOG.md
-      - LICENSE
-      - README.md
-      - values.yaml
-      - .git
-      - .github
-    copyPaths:
-      -
-        from: Chart.yaml
-        to: Chart.example.yaml
-    gitignore:
-      - Chart.yaml
+    -
+        link: 'https://github.com/nixys/nxs-universal-chart.git'
+        name: chart
+        version: v2.5.1
+        excludePaths:
+            - docs
+            - .gitlab-ci.yml
+            - CHANGELOG.md
+            - LICENSE
+            - README.md
+            - values.yaml
+            - .git
+            - .github
+        copyPaths:
+            -
+                from: Chart.yaml
+                to: Chart.example.yaml
+        gitignore:
+            - Chart.yaml

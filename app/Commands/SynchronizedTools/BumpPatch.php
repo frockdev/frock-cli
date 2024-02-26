@@ -28,6 +28,6 @@ class BumpPatch extends Command
                 $config->setNewSynchronizedToolsetVersion($this->argument('tool'), $version);
             }
         }
-        Artisan::call('tools:install');
+        Artisan::call('tools:install', [], $this->output);
     }
 }
