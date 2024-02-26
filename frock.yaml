@@ -11,11 +11,17 @@ synchronizedTools:
       name: "nxs-universal-chart"
       version: "v2.5.1"
       excludePaths:
+          - docs
+          - .gitlab-ci.yml
+          - CHANGELOG.md
+          - LICENSE
+          - README.md
+          - values.yaml
           - .git
           - .github
-      movePaths:
+      copyPaths:
           - from: "Chart.yaml"
             to: "Chart.example.yaml"
       gitignore:
-          - "Chart.example.yaml"
+          - "Chart.yaml"
 
