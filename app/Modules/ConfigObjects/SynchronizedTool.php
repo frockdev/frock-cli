@@ -9,6 +9,7 @@ namespace App\Modules\ConfigObjects;
 //	Version      string     `json:"version"`
 //	ExcludePaths []string   `json:"excludePaths,omitempty"`
 //	MovePaths    []MovePath `json:"movePaths,omitempty"`
+//  OnlyPaths    []string   `json:"onlyPaths,omitempty"`
 //	Gitignore    []string   `json:"gitignore,omitempty"`
 //}
 //
@@ -27,6 +28,7 @@ class SynchronizedTool
      * @param array|MovePath[] $movePaths
      * @param array|string[] $gitignore
      * @param array|CopyPath[] $copyPaths
+     * @param array $onlyPaths
      */
     public function __construct(
         public readonly string $link,
@@ -35,7 +37,8 @@ class SynchronizedTool
         public readonly array $excludePaths,
         public readonly array $movePaths,
         public readonly array $gitignore,
-        public readonly array $copyPaths
+        public readonly array $copyPaths,
+        public readonly array $onlyPaths,
     )
     {
     }
