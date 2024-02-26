@@ -3,6 +3,7 @@
 namespace App\Modules\ProjectConfig;
 
 use App\Modules\ConfigObjects\Command;
+use App\Modules\ConfigObjects\CopyPath;
 use App\Modules\ConfigObjects\DevelopmentPackage;
 use App\Modules\ConfigObjects\MovePath;
 use App\Modules\ConfigObjects\SynchronizedTool;
@@ -77,13 +78,18 @@ class Config
             foreach ($tool['movePaths'] ?? [] as $movePath) {
                 $movePaths[] = new MovePath($movePath['from'], $movePath['to']);
             }
+            $copyPaths=[];
+            foreach ($tool['copyPaths'] ?? [] as $copyPath) {
+                $copyPaths[] = new CopyPath($copyPath['from'], $copyPath['to']);
+            }
             $result[] = new SynchronizedTool(
                 link: $tool['link'],
                 name: $tool['name'],
                 version: $tool['version'],
                 excludePaths: $tool['excludePaths'] ?? [],
                 movePaths: $movePaths,
-                gitignore: $tool['gitignore'] ?? []
+                gitignore: $tool['gitignore'] ?? [],
+                copyPaths: $copyPaths,
             );
         }
         return $result;

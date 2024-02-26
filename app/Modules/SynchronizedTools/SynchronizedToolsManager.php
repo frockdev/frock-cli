@@ -25,19 +25,25 @@ class SynchronizedToolsManager
     public function installTool(SynchronizedTool $tool) {
         $config = app()->make(Config::class);
         $git = new \CzProject\GitPhp\Git;
-        $repo = $git->cloneRepository($tool->link, $config->getWorkingDir().'/'. $tool->name);
+        $toolDir = $config->getWorkingDir().'/'. $tool->name.'-synchronized-tool';
+        $repo = $git->cloneRepository($tool->link, $toolDir);
 
         $repo->checkout($tool->version);
         foreach ($tool->excludePaths as $excludePath) {
-            shell_exec('rm -rf '.$config->getWorkingDir().'/'. $tool->name.'/'.$excludePath);
+            shell_exec('rm -rf '.$toolDir.'/'.$excludePath);
+        }
+
+        foreach ($tool->copyPaths as $copyPath) {
+            shell_exec('cp -r '.$toolDir.'/'.$copyPath->from.' '.$toolDir.'/'.$copyPath->to);
         }
 
         foreach ($tool->movePaths as $movePath) {
-            shell_exec('mv '.$config->getWorkingDir().'/'. $tool->name.'/'.$movePath->from.' '.$config->getWorkingDir().'/'.$tool->name.'/'.$movePath->to);
+            shell_exec('mv '.$toolDir.'/'.$movePath->from.' '.$toolDir.'/'.$movePath->to);
         }
 
+        file_put_contents($toolDir.'/.gitignore', PHP_EOL , FILE_APPEND | LOCK_EX);
         foreach ($tool->gitignore as $gitignore) {
-            file_put_contents($config->getWorkingDir().'/'. $tool->name.'/.gitignore', $gitignore.PHP_EOL , FILE_APPEND | LOCK_EX);
+            file_put_contents($toolDir.'/.gitignore', $gitignore.PHP_EOL , FILE_APPEND | LOCK_EX);
         }
     }
 }

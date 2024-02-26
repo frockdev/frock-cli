@@ -26,6 +26,7 @@ class SynchronizedTool
      * @param array|string[] $excludePaths
      * @param array|MovePath[] $movePaths
      * @param array|string[] $gitignore
+     * @param array|CopyPath[] $copyPaths
      */
     public function __construct(
         public readonly string $link,
@@ -34,6 +35,7 @@ class SynchronizedTool
         public readonly array $excludePaths,
         public readonly array $movePaths,
         public readonly array $gitignore,
+        public readonly array $copyPaths
     )
     {
     }
