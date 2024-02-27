@@ -27,6 +27,15 @@ class DevelopmentPackagesManager
         }
     }
 
+    public function getStabilityDependsAnyPackagesThere() {
+        foreach ($this->config->getDevelopmentPackages() as $package) {
+            if (file_exists($this->config->getWorkingDir().'/packages/'.$package->shortName)) {
+                return 'dev';
+            }
+        }
+        return 'stable';
+    }
+
     public function installPackageInNormalMode(DevelopmentPackage $currentPackage)
     {
         $git = new Git();
@@ -48,12 +57,14 @@ class DevelopmentPackagesManager
             unset($composerJson['repositories'][$currentPackage->shortName]);
         }
         unset($composerJson['require'][$currentPackage->composerPackageName]);
+        shell_exec('rm -rf '.$this->config->getWorkingDir() . '/packages/' . $currentPackage->shortName);
+        $composerJson['minimum-stability'] = $this->getStabilityDependsAnyPackagesThere();
         $resultJson = json_encode($composerJson, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
         file_put_contents($this->config->getWorkingDir() . '/php/composer.json', $resultJson);
 
         $podName = $this->kubernetesClusterManager->findPodByLabelAndNamespace('containerForDeveloper', 'true', $this->config->getNamespace());
         $this->kubernetesClusterManager->execDevCommand($this->config->getNamespace(), $podName, 'composer require '.$currentPackage->composerPackageName);
-        shell_exec('rm -rf '.$this->config->getWorkingDir() . '/packages/' . $currentPackage->shortName);
+
 
     }
 
@@ -73,7 +84,7 @@ class DevelopmentPackagesManager
             ]
         ];
 
-        $composerJson['minimum-stability'] = 'dev';
+        $composerJson['minimum-stability'] = $this->getStabilityDependsAnyPackagesThere();
 
         $composerJson['require'][$currentPackage->composerPackageName] = 'dev-'.$currentPackage->branch;
 
