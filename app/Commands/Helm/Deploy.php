@@ -22,8 +22,9 @@ class Deploy extends Command
         $this->info('Deploying Helm chart from ' . $deploy->chartLocal->chartPath);
 
         $helmTool->putVersionsIfNeeded($deploy);
+        $helmTool->combineValues($deploy);
 
-        $helmTool->deploy($deploy);
+        $helmTool->deploy($deploy, $config->getProjectName(), $config->getWorkingDir());
 
 
     }

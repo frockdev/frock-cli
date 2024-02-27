@@ -45,6 +45,7 @@ class Config
     }
 
     public function getAppEnv() {
+        if (!isset($this->config['deploy']['appEnvironment'])) throw new \Exception('You should set up "deploy" block in frock.yaml');
         return getenv('APP_ENV') ?: $this->config['deploy']['appEnvironment'];
     }
 
@@ -195,6 +196,7 @@ class Config
                     chartPath: $this->getWorkingDir().'/'.$this->config['deploy']['chartLocal']['chartPath'],
                     appVersion: $this->getAppVersion(),
                     chartVersion: $this->getChartVersion(),
+                    valuesKeyOfLocalDirectory: $this->config['deploy']['chartLocal']['valuesKeyOfLocalDirectory']??null
                 ),
                 chartRemote: null,
                 valuesByEnv: $this->config['deploy']['valuesByEnv'] ?? $this->getWorkingDir().'/values'
@@ -203,11 +205,11 @@ class Config
     }
 
     public function getChartVersion() {
-        return getenv('CHART_VERSION') ?: null;
+        return getenv('CHART_VERSION') ?: $this->config['deploy']['chartLocal']['chartVersion'] ?? null;
     }
 
     public function getAppVersion() {
-        return getenv('APP_VERSION') ?: null;
+        return getenv('APP_VERSION') ?: $this->config['deploy']['chartLocal']['version'] ?? null;
     }
 
     public function getDevImage(): string
