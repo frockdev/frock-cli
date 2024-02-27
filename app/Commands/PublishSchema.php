@@ -13,7 +13,7 @@ class PublishSchema extends Command
     public function handle(Config $config) {
         file_put_contents(
             $config->getWorkingDir().'/frock.schema.json',
-          file_get_contents(app_path().'/schema/frock.schema.json')
+          file_get_contents(app_path().'/../schema/frock.schema.json')
         );
     }
 }
