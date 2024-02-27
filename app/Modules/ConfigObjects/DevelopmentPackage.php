@@ -6,8 +6,10 @@ class DevelopmentPackage
 {
     public function __construct(
         public readonly string $sshLink,
-        public readonly string $devName,
-        public readonly string $branchOrTag,
+        public readonly string $branch,
+        public readonly string $composerPackageName,
+        public readonly string $shortName,
+        public readonly bool   $pushWhenSwitchingOff = false,
     )
     {
     }

@@ -47,7 +47,15 @@ class Config
     }
 
     public function getDeveloperName() {
-        return getenv('DEVELOPER_NAME') ?: $this->config['developerName'];
+        if (getenv('DEVELOPER_NAME')) {
+            return getenv('DEVELOPER_NAME');
+        } else {
+            if (isset($this->config['developerName'])) {
+                return $this->config['developerName'];
+            } else {
+                return 'FrockDeveloper';
+            }
+        }
     }
 
     public function getAppEnv() {
@@ -92,11 +100,20 @@ class Config
         return $result;
     }
 
+    /**
+     * @return array|DevelopmentPackage[]
+     */
     public function getDevelopmentPackages(): array {
         $packages = $this->config['developmentPackages'] ?? [];
         $result = [];
         foreach ($packages as $package) {
-            $result[] = new DevelopmentPackage($package['sshLink'], $package['devName'], $package['branchOrTag']);
+            $result[$package['shortName']] = new DevelopmentPackage(
+                sshLink: $package['sshLink'],
+                branch: $package['branch'],
+                composerPackageName: $package['composerPackageName'],
+                shortName: $package['shortName'],
+                pushWhenSwitchingOff: $package['pushWhenSwitchingOff']
+            );
         }
         return $result;
     }
@@ -185,7 +202,6 @@ class Config
                 namespace: $this->getNamespace(),
                 appEnvironment: $this->getAppEnv(),
                 kubectlExecCommand: $this->getKubectlExecCommand(),
-                kubectlDebugCommand: $this->getKubectlDebugCommand(),
                 chartLocal: null,
                 chartRemote: new ChartRemote(
                     $this->config['deploy']['chartRemote']['repoUrl'],
@@ -199,7 +215,6 @@ class Config
                 namespace: $this->getNamespace(),
                 appEnvironment: $this->getAppEnv(),
                 kubectlExecCommand: $this->getKubectlExecCommand(),
-                kubectlDebugCommand: $this->getKubectlDebugCommand(),
                 chartLocal: new ChartLocal(
                     chartPath: $this->getWorkingDir().'/'.$this->config['deploy']['chartLocal']['chartPath'],
                     appVersion: $this->getAppVersion(),
