@@ -10,6 +10,7 @@ use App\Modules\ConfigObjects\Deploy;
 use App\Modules\ConfigObjects\DevelopmentPackage;
 use App\Modules\ConfigObjects\MovePath;
 use App\Modules\ConfigObjects\SynchronizedTool;
+use Symfony\Component\Process\Process;
 use Symfony\Component\Yaml\Yaml;
 
 class Config
@@ -24,6 +25,11 @@ class Config
      * @var mixed|string
      */
     private string $devImage;
+
+    public function getDevWorkingDir()
+    {
+        return $this->config['developerWorkingDirectory'] ?? '/';
+    }
 
     private function readEnvVariables() {
         $variables = [
@@ -79,7 +85,9 @@ class Config
                 signature: $command['signature'],
                 type: $command['type'],
                 command: $command['command'],
-                description: $command['description']);
+                description: $command['description'],
+                debug: $command['debug'] ?? false
+            );
         }
         return $result;
     }
@@ -219,12 +227,16 @@ class Config
 
     public function getKubectlExecCommand()
     {
-        return $this->config['deploy']['kubectlExecCommand'] ?? 'kubectl exec -n '.$this->getNamespace().' -it $(kubectl get pods -l kubectlExec=true -o jsonpath="{.items[0].metadata.name}") -- /bin/bash -c "cd /var/www/php && ';
+        return $this->config['deploy']['kubectlExecCommand'] ?? 'kubectl exec -n %s -it %s -- bash -c';
     }
 
-    public function getKubectlDebugCommand()
-    {
-        return $this->config['deploy']['kubectlDebugCommand'] ?? 'kubectl exec -n '.$this->getNamespace().' -it $(kubectl get pods -l kubectlExec=true -o jsonpath="{.items[0].metadata.name}") -- /bin/bash -c "cd /var/www/php && export XDEBUG_MODE=debug && export XDEBUG_SESSION=PHPSTORM && ';
+    public function getDebugEnvExportForCommands() {
+        $arr = $this->config['debugEnvForCommands'] ?? [];
+        $exportString = '';
+        foreach ($arr as $key => $value) {
+            $exportString .= 'export '.$key.'='.$value.' && ';
+        }
+        return substr($exportString, 0, -4);
     }
 
     public function getNamespace()
