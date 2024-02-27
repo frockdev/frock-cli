@@ -42,7 +42,7 @@ class KubernetesClusterManager
         $cmd = sprintf($exec, $namespace, $podName);
         $explodedCmd = explode(' ', $cmd);
         $explodedCmd[] = $command;
-        echo implode(' ', $explodedCmd)."\n";
+
         $process = new Process($explodedCmd);
         $process->setIdleTimeout(null);
         $process->setTimeout(null);
