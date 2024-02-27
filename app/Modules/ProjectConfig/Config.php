@@ -171,7 +171,7 @@ class Config
     }
 
     public function getDeployConfig(): Deploy {
-        if ($this->config['deploy']['chartRemote']) {
+        if (isset($this->config['deploy']['chartRemote']) && $this->config['deploy']['chartRemote']) {
             return new Deploy(
                 namespace: $this->getNamespace(),
                 appEnvironment: $this->getAppEnv(),
