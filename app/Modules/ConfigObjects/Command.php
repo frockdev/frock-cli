@@ -15,7 +15,7 @@ class Command
     public function __construct(
         public readonly string $signature,
         public readonly string $type,
-        public readonly string $command,
+        public readonly array $command,
         public readonly string $description,
         public readonly bool $debug = false,
     )

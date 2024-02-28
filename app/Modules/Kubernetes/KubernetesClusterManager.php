@@ -28,22 +28,22 @@ class KubernetesClusterManager
         return trim($podName, "'");
     }
 
-    public function execDevCommand(string $namespace, string $podName, string $command, bool $debug = false) {
-        $exec = $this->config->getKubectlExecCommand();
+    public function execDevCommand(string $namespace, string $podName, array $command, bool $debug = false) {
+        $runnable = $this->config->getKubectlExecCommand($namespace, $podName);
 
         if ($debug) {
-            $command = $this->config->getDebugEnvExportForCommands().' && '.$command;
+            $command = [...$this->config->getDebugEnvExportForCommands(), '&&', ...$command];
         }
 
         if ($this->config->getDevWorkingDir()) {
-            $command = 'cd '.$this->config->getDevWorkingDir().' && '.$command;
+            $command = ['cd', $this->config->getDevWorkingDir(), '&&', ...$command];
         }
 
-        $cmd = sprintf($exec, $namespace, $podName);
-        $explodedCmd = explode(' ', $cmd);
-        $explodedCmd[] = $command;
+        $command = implode(' ', $command);
 
-        $process = new Process($explodedCmd);
+        $runnable = [...$runnable, $command];
+
+        $process = new Process($runnable);
         $process->setIdleTimeout(null);
         $process->setTimeout(null);
         $process->setTty(true);

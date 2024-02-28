@@ -28,7 +28,12 @@ class Config
 
     public function getDevWorkingDir()
     {
-        return $this->config['developerWorkingDirectory'] ?? '/';
+        if (!isset($this->config['settings']['developerWorkingDirectory'])) {
+            return '/';
+        } else {
+            return $this->config['settings']['developerWorkingDirectory'];
+        }
+
     }
 
     private function readEnvVariables() {
@@ -50,8 +55,8 @@ class Config
         if (getenv('DEVELOPER_NAME')) {
             return getenv('DEVELOPER_NAME');
         } else {
-            if (isset($this->config['developerName'])) {
-                return $this->config['developerName'];
+            if (isset($this->config['settings']['developerName'])) {
+                return $this->config['settings']['developerName'];
             } else {
                 return 'FrockDeveloper';
             }
@@ -201,7 +206,6 @@ class Config
             return new Deploy(
                 namespace: $this->getNamespace(),
                 appEnvironment: $this->getAppEnv(),
-                kubectlExecCommand: $this->getKubectlExecCommand(),
                 chartLocal: null,
                 chartRemote: new ChartRemote(
                     $this->config['deploy']['chartRemote']['repoUrl'],
@@ -214,7 +218,6 @@ class Config
             return new Deploy(
                 namespace: $this->getNamespace(),
                 appEnvironment: $this->getAppEnv(),
-                kubectlExecCommand: $this->getKubectlExecCommand(),
                 chartLocal: new ChartLocal(
                     chartPath: $this->getWorkingDir().'/'.$this->config['deploy']['chartLocal']['chartPath'],
                     appVersion: $this->getAppVersion(),
@@ -240,18 +243,35 @@ class Config
         return $this->devImage;
     }
 
-    public function getKubectlExecCommand()
-    {
-        return $this->config['deploy']['kubectlExecCommand'] ?? 'kubectl exec -n %s -it %s -- bash -c';
+    public function getDevContainerShell() {
+        if (isset($this->config['settings']['devContainerShell'])) {
+            return $this->config['settings']['devContainerShell'];
+        } else {
+            return 'bash';
+        }
     }
 
-    public function getDebugEnvExportForCommands() {
-        $arr = $this->config['debugEnvForCommands'] ?? [];
-        $exportString = '';
-        foreach ($arr as $key => $value) {
-            $exportString .= 'export '.$key.'='.$value.' && ';
+    public function getKubectlExecCommand(string $namespace, string $podname)
+    {
+        return ['kubectl', 'exec', '-n', $namespace, '-it', $podname, '--' , $this->getDevContainerShell(),'-c'];
+    }
+
+    public function getDebugEnvExportForCommands():array {
+        if (!isset($this->config['settings']['debugEnvForCommands'])) {
+            $arr = [];
+        } else {
+            $arr = $this->config['settings']['debugEnvForCommands'];
         }
-        return substr($exportString, 0, -4);
+        $exportArr = [];
+        foreach ($arr as $key => $value) {
+            $exportArr[] = 'export';
+            $exportArr[] = $key.'='.$value;
+            $exportArr[] = '&&';
+        }
+        if (count($exportArr)>0) {
+            unset($exportArr[count($exportArr)-1]);
+        }
+        return $exportArr;
     }
 
     public function getNamespace()

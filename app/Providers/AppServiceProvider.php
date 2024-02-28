@@ -6,6 +6,7 @@ use App\Modules\Kubernetes\KubernetesClusterManager;
 use App\Modules\ProjectConfig\Config;
 use Illuminate\Console\Command;
 use Illuminate\Support\ServiceProvider;
+use Symfony\Component\Process\Process;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -39,19 +40,41 @@ class AppServiceProvider extends ServiceProvider
                 public function handle() {
 
                     if ($this->command->type==\App\Modules\ConfigObjects\Command::ARTISAN_TYPE) {
-//                        $runnable = $this->kubectlExec. ' php ./artisan ' . $this->command->command;
+
+                        $runnable = ['php', 'artisan', ...$this->command->command];
+                        $pod = $this->clusterManager->findPodByLabelAndNamespace('containerForDeveloper', 'true', $this->namespace);
+                        $this->clusterManager->execDevCommand($this->namespace, $pod, $runnable, $this->command->debug);
+
                     } elseif ($this->command->type==\App\Modules\ConfigObjects\Command::FROCK_TYPE) {
-//                        $runnable = $this->kubectlExec. ' php ./vendor/bin/frock.php ' . $this->command->command;
+                        $runnable = ['php', 'vendor/bin/frock.php', ...$this->command->command];
+                        $pod = $this->clusterManager->findPodByLabelAndNamespace('containerForDeveloper', 'true', $this->namespace);
+                        $this->clusterManager->execDevCommand($this->namespace, $pod, $runnable, $this->command->debug);
                     } elseif ($this->command->type==\App\Modules\ConfigObjects\Command::COMPOSER_TYPE) {
-//                        $runnable = $this->kubectlExec. ' composer ' . $this->command->command;
+
+                        $runnable = ['composer', ...$this->command->command];
+                        $pod = $this->clusterManager->findPodByLabelAndNamespace('containerForDeveloper', 'true', $this->namespace);
+                        $this->clusterManager->execDevCommand($this->namespace, $pod, $runnable, $this->command->debug);
+
                     } elseif ($this->command->type==\App\Modules\ConfigObjects\Command::PHP_TYPE) {
-//                        $runnable = $this->kubectlExec. ' php ' . $this->command->command;
+
+                        $runnable = ['php', ...$this->command->command];
+                        $pod = $this->clusterManager->findPodByLabelAndNamespace('containerForDeveloper', 'true', $this->namespace);
+                        $this->clusterManager->execDevCommand($this->namespace, $pod, $runnable, $this->command->debug);
+
                     } elseif ($this->command->type==\App\Modules\ConfigObjects\Command::BASH_TYPE) {
+
                         $runnable = $this->command->command;
                         $pod = $this->clusterManager->findPodByLabelAndNamespace('containerForDeveloper', 'true', $this->namespace);
                         $this->clusterManager->execDevCommand($this->namespace, $pod, $runnable, $this->command->debug);
+
                     } elseif ($this->command->type==\App\Modules\ConfigObjects\Command::RAW_TYPE) {
                         $runnable = $this->command->command;
+                        $process = new Process($runnable);
+                        $process->setTty(true);
+                        $process->setIdleTimeout(null);
+                        $process->setTimeout(null);
+                        $process->run();
+
                     }
                     if (!$runnable) {
                         throw new \Exception('Invalid command type: ' . $this->command->signature . ' ' . $this->command->type);
