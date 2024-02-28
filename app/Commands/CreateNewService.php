@@ -2,7 +2,6 @@
 
 namespace App\Commands;
 
-use App\Modules\Common\Operations;
 use LaravelZero\Framework\Commands\Command;
 use function Termwind\render;
 
@@ -25,9 +24,9 @@ class CreateNewService extends Command
     /**
      * Execute the console command.
      */
-    public function handle(Operations $operations): void
+    public function handle( ): void
     {
-        $operations->installWholeToolset($operations->detectLatestVersion());
+
 
 
 

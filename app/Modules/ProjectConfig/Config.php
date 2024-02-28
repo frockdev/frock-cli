@@ -9,22 +9,20 @@ use App\Modules\ConfigObjects\CopyPath;
 use App\Modules\ConfigObjects\Deploy;
 use App\Modules\ConfigObjects\DevelopmentPackage;
 use App\Modules\ConfigObjects\MovePath;
+use App\Modules\ConfigObjects\RedefineValuesFromYamlFiles;
 use App\Modules\ConfigObjects\SynchronizedTool;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Yaml\Yaml;
 
 class Config
 {
+    const NAMESPACE = 'NAMESPACE';
+    const APP_ENV = 'APP_ENV';
+    const CHART_VERSION = 'CHART_VERSION';
+    const APP_VERSION = 'APP_VERSION';
+    const DEVELOPER_NAME = 'DEVELOPER_NAME';
     private array $config;
     private string $projectName;
-    /**
-     * @var mixed|string
-     */
-    private string $helmChartRepository;
-    /**
-     * @var mixed|string
-     */
-    private string $devImage;
 
     public function getDevWorkingDir()
     {
@@ -38,11 +36,11 @@ class Config
 
     private function readEnvVariables() {
         $variables = [
-            'NAMESPACE',
-            'APP_ENV',
-            'CHART_VERSION',
-            'APP_VERSION',
-            'DEVELOPER_NAME',
+            self::NAMESPACE,
+            self::APP_ENV,
+            self::CHART_VERSION,
+            self::APP_VERSION,
+            self::DEVELOPER_NAME,
         ];
         foreach ($variables as $variable) {
             if (getenv($variable)) {
@@ -52,8 +50,8 @@ class Config
     }
 
     public function getDeveloperName() {
-        if (getenv('DEVELOPER_NAME')) {
-            return getenv('DEVELOPER_NAME');
+        if (getenv(self::DEVELOPER_NAME)) {
+            return getenv(self::DEVELOPER_NAME);
         } else {
             if (isset($this->config['settings']['developerName'])) {
                 return $this->config['settings']['developerName'];
@@ -64,23 +62,21 @@ class Config
     }
 
     public function getAppEnv() {
-        if (!isset($this->config['deploy']['appEnvironment'])) throw new \Exception('You should set up "deploy" block in frock.yaml');
-        return getenv('APP_ENV') ?: $this->config['deploy']['appEnvironment'];
+        if (!isset($this->config['deploy'])) throw new \Exception('You should set up "deploy" block in frock.yaml');
+        return getenv(self::APP_ENV) ?getenv(self::APP_ENV): $this->config['deploy']['appEnvironment'];
     }
 
     public function __construct()
     {
         $this->config = array_merge($this->readConfig(), $this->readOverridenConfig());
-
         $this->projectName = $this->config['projectName'];
-        $this->helmChartRepository = $this->config['helmChartRepository'] ?? 'https://github.com/frockdev/app-chart.git';
-        $this->devImage = $this->config['devImage'] ?? 'vladitot/php83-swow-local:master';
+
     }
 
     private function readConfig(): array {
         if (!file_exists(getcwd().'/frock.yaml')) {
             $dirname = basename(getcwd());
-            file_put_contents(getcwd().'/frock.yaml', "infraVersion: main\nprojectName: ".$dirname."\n");
+            file_put_contents(getcwd().'/frock.yaml', "projectName: ".$dirname."\n");
         }
         $parsed = Yaml::parseFile(getcwd().'/frock.yaml');
         return $parsed;
@@ -170,7 +166,7 @@ class Config
     {
         if (file_exists(getcwd().'/frock.overriden.yaml')) {
             $data = Yaml::parseFile(getcwd().'/frock.overriden.yaml');
-            return (array)$data;
+            return $data;
         }
         return [];
     }
@@ -196,19 +192,93 @@ class Config
         return trim(shell_exec('whoami'));
     }
 
-    public function getHelmChartRepository(): string
-    {
-        return $this->helmChartRepository;
+    /**
+     * @return array|Deploy[]
+     * @throws \Exception
+     */
+    public function getBoxes(): array {
+        if (!isset($this->config['boxes'])) {
+            return [];
+        }
+        $boxes = [];
+        foreach ($this->config['boxes'] as $boxName=>$deploy) {
+            $redefines = [];
+            if (isset($deploy['redefineValuesFromYamlFiles']) && is_array($deploy['redefineValuesFromYamlFiles'])) {
+                foreach ($deploy['redefineValuesFromYamlFiles'] as $file=>$arr) {
+                    $redefines[] = new RedefineValuesFromYamlFiles($file, $arr);
+                }
+            }
+
+            if (isset($deploy['finalValuesFilePath']) && $deploy['finalValuesFilePath']) {
+                $finalValuesFilePath = $deploy['finalValuesFilePath'];
+            } else {
+                $finalValuesFilePath = ($deploy['valuesByEnv'] ?? 'boxes/'.$boxName.'/values').'/values.yaml';
+            }
+
+            if (isset($deploy['chartRemote']) && $deploy['chartRemote']) {
+                $boxes[$boxName] = new Deploy(
+                    namespace: $this->getNamespace().'-'.$boxName,
+                    appEnvironment: $this->getAppEnv(),
+                    finalValuesFilePath: $finalValuesFilePath,
+                    combineFinalValuesFromEnvAndOverrides: $deploy['combineFinalValuesFromEnvAndOverrides'] ?? true,
+                    redefineValuesFromEnvVariables: $deploy['redefineValuesFromEnvVariables'] ?? [],
+                    redefineValuesFromYamlFiles: $redefines,
+                    chartLocal: null,
+                    chartRemote: new ChartRemote(
+                        $deploy['chartRemote']['chartUrl'],
+                        $deploy['chartRemote']['version'],
+                        $deploy['chartRemote']['chartName']
+                    ),
+                    valuesByEnv: $deploy['valuesByEnv'] ?? $this->getWorkingDir().'/values'
+                );
+            } else {
+                $boxes[$boxName] = new Deploy(
+                    namespace: $this->getNamespace().'-'.$boxName,
+                    appEnvironment: $this->getAppEnv(),
+                    finalValuesFilePath: $finalValuesFilePath,
+                    combineFinalValuesFromEnvAndOverrides: $deploy['combineFinalValuesFromEnvAndOverrides'] ?? true,
+                    redefineValuesFromEnvVariables: $deploy['redefineValuesFromEnvVariables'] ?? [],
+                    redefineValuesFromYamlFiles: $redefines,
+                    chartLocal: new ChartLocal(
+                        chartPath: $this->getWorkingDir().'/'.$deploy['chartLocal']['chartPath'],
+                        appVersion: $this->getAppVersion(),
+                        chartVersion: $this->getChartVersion(),
+                        valuesKeyOfLocalDirectory: $deploy['chartLocal']['valuesKeyOfLocalDirectory']??null
+                    ),
+                    chartRemote: null,
+                    valuesByEnv: $deploy['valuesByEnv'] ?? $this->getWorkingDir().'/values'
+                );
+            }
+        }
+        return $boxes;
     }
 
     public function getDeployConfig(): Deploy {
+
+        $redefines = [];
+        if (isset($this->config['deploy']['redefineValuesFromYamlFiles']) && is_array($this->config['deploy']['redefineValuesFromYamlFiles'])) {
+            foreach ($this->config['deploy']['redefineValuesFromYamlFiles'] as $file=>$arr) {
+                $redefines[] = new RedefineValuesFromYamlFiles($file, $arr);
+            }
+        }
+
+        if (isset($this->config['deploy']['finalValuesFilePath']) && $this->config['deploy']['finalValuesFilePath']) {
+            $finalValuesFilePath = $this->config['deploy']['finalValuesFilePath'];
+        } else {
+            $finalValuesFilePath = ($this->config['deploy']['valuesByEnv'] ?? 'values').'/values.yaml';
+        }
+
         if (isset($this->config['deploy']['chartRemote']) && $this->config['deploy']['chartRemote']) {
             return new Deploy(
                 namespace: $this->getNamespace(),
                 appEnvironment: $this->getAppEnv(),
+                finalValuesFilePath: $finalValuesFilePath,
+                combineFinalValuesFromEnvAndOverrides: $this->config['deploy']['combineFinalValuesFromEnvAndOverrides'] ?? true,
+                redefineValuesFromEnvVariables: $this->config['deploy']['redefineValuesFromEnvVariables'] ?? [],
+                redefineValuesFromYamlFiles: $redefines,
                 chartLocal: null,
                 chartRemote: new ChartRemote(
-                    $this->config['deploy']['chartRemote']['repoUrl'],
+                    $this->config['deploy']['chartRemote']['chartUrl'],
                     $this->config['deploy']['chartRemote']['version'],
                     $this->config['deploy']['chartRemote']['chartName']
                 ),
@@ -218,6 +288,10 @@ class Config
             return new Deploy(
                 namespace: $this->getNamespace(),
                 appEnvironment: $this->getAppEnv(),
+                finalValuesFilePath: $finalValuesFilePath,
+                combineFinalValuesFromEnvAndOverrides: $this->config['deploy']['combineFinalValuesFromEnvAndOverrides'] ?? true,
+                redefineValuesFromEnvVariables: $this->config['deploy']['redefineValuesFromEnvVariables'] ?? [],
+                redefineValuesFromYamlFiles: $redefines,
                 chartLocal: new ChartLocal(
                     chartPath: $this->getWorkingDir().'/'.$this->config['deploy']['chartLocal']['chartPath'],
                     appVersion: $this->getAppVersion(),
@@ -231,16 +305,11 @@ class Config
     }
 
     public function getChartVersion() {
-        return getenv('CHART_VERSION') ?: $this->config['deploy']['chartLocal']['chartVersion'] ?? null;
+        return getenv(self::CHART_VERSION) ?: $this->config['deploy']['chartLocal']['chartVersion'] ?? null;
     }
 
     public function getAppVersion() {
-        return getenv('APP_VERSION') ?: $this->config['deploy']['chartLocal']['version'] ?? null;
-    }
-
-    public function getDevImage(): string
-    {
-        return $this->devImage;
+        return getenv(self::APP_VERSION) ?: $this->config['deploy']['chartLocal']['version'] ?? null;
     }
 
     public function getDevContainerShell() {
@@ -276,6 +345,6 @@ class Config
 
     public function getNamespace()
     {
-        return getenv('NAMESPACE') ?: ($this->config['deploy']['namespace'] ?? $this->getProjectName().'-ns');
+        return getenv(self::NAMESPACE) ?: ($this->config['deploy']['namespace'] ?? $this->getProjectName().'-'.$this->getAppEnv());
     }
 }

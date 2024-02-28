@@ -2,14 +2,25 @@
 
 namespace App\Modules\HelmTool;
 
+use App\CurCom;
 use App\Modules\ConfigObjects\Deploy;
+use App\Modules\ProjectConfig\Config;
+use Illuminate\Support\Arr;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Yaml\Yaml;
 
 class HelmTool
 {
-    public function purge(Deploy $deploy, string $projectName ) {
-        $cmd = ['helm', 'uninstall', '-n', $deploy->namespace, $projectName.'-'.$deploy->appEnvironment];
+
+    private Config $config;
+
+    public function __construct(Config $config)
+    {
+        $this->config = $config;
+    }
+
+    public function purge(Deploy $deploy, string $entityToPurge ) {
+        $cmd = ['helm', 'uninstall', '-n', $deploy->namespace, $entityToPurge.'-'.$deploy->appEnvironment];
         $process = new Process($cmd);
         $process->setTty(true);
         $process->run();
@@ -19,25 +30,137 @@ class HelmTool
         $process->run();
     }
 
-    public function deploy(Deploy $deploy, string $projectName, string $workingDirectory) {
+    private function valuesCmdBuilding(Deploy $deploy, string $workingDirectory) {
+        if (!file_exists($deploy->finalValuesFilePath)) {
+            @mkdir($this->config->getWorkingDir().'/'.dirname($deploy->finalValuesFilePath), 0777, true);
+            touch($deploy->finalValuesFilePath);
+        }
+        $valuesCmd = '-f '.$deploy->finalValuesFilePath;
+
+        CurCom::get()->info('Loading Values from: '.$deploy->finalValuesFilePath);
+
+        if (isset($deploy->chartLocal->valuesKeyOfLocalDirectory)) {
+            if ($deploy->chartLocal->valuesKeyOfLocalDirectory) {
+                $valuesCmd.= ' --set '.$deploy->chartLocal->valuesKeyOfLocalDirectory.'=' . $workingDirectory;
+            }
+        }
+
+        foreach ($deploy->redefineValuesFromYamlFiles as $redefineValuesFromYamlFile) {
+            $fileParsed = Yaml::parseFile($this->config->getWorkingDir().'/'.$redefineValuesFromYamlFile->yamlFile);
+            foreach ($redefineValuesFromYamlFile->fromYamlToHelm as $yamlKey => $helmKey) {
+                CurCom::get()->info('We are redefining '.$helmKey.' from '.$redefineValuesFromYamlFile->yamlFile.' to '.Arr::get($fileParsed, $yamlKey));
+                $valuesCmd.= ' --set '.$helmKey.'=' . Arr::get($fileParsed, $yamlKey);
+            }
+        }
+
+        foreach ($deploy->redefineValuesFromEnvVariables as $envVariable => $helmKey) {
+            if (getenv($envVariable)) {
+                CurCom::get()->info('We are redefining '.$helmKey.' from environment variable '.$envVariable.' to '.getenv($envVariable));
+                $valuesCmd.= ' --set '.$helmKey.'=' . getenv($envVariable);
+            }
+        }
+
+        return $valuesCmd;
+    }
+
+    public function deploy(Deploy $deploy, string $installableEntityName, string $workingDirectory) {
+
         if ($deploy->chartLocal === null) {
+            $repoName = $this->config->getProjectName().'-'.$installableEntityName;
+
+            CurCom::get()->info('Working with remote repo: '.$repoName);
+            $values = $this->valuesCmdBuilding($deploy, $workingDirectory);
+
+            //helm repo add
+            CurCom::get()->info('Removing old repo: '.$repoName);
+            $cmd = ['helm', 'repo', 'remove', $repoName, $deploy->chartRemote->repoUrl];
+            $process = new Process($cmd);
+            $process->run();
+
+            CurCom::get()->info('Adding Repo: '.$repoName);
+            $cmd = ['helm', 'repo', 'add', $repoName, $deploy->chartRemote->repoUrl];
+            $process = new Process($cmd);
+            $process->setTty(true);
+            $process->run();
+
+            CurCom::get()->info('Running helm update...');
+            $cmd = ['helm', 'repo', 'update', $repoName];
+            $process = new Process($cmd);
+            $process->setTty(true);
+            $process->run();
+
+
+            CurCom::get()->info('Installing '.$installableEntityName.' from '.$deploy->chartRemote->repoUrl.' version '.$deploy->chartRemote->version.' into namespace '.$deploy->namespace);
+            $cmd = ['helm', 'upgrade', '--create-namespace', '-n', $deploy->namespace, '--version', $deploy->chartRemote->version, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
+
+            foreach (explode(' ', $values) as $word) {
+                $cmd[] = $word;
+            }
+            $cmd[] = $repoName.'/'.$installableEntityName;
+            $process = new Process($cmd);
+            $process->setTty(true);
+            $process->run();
+
 
         } else {
-            if (file_exists($deploy->valuesByEnv . '/final.values.yaml')) {
-                $values = '-f '.$deploy->valuesByEnv . '/final.values.yaml';
-            } else {
-                throw new \Exception('final.values.yaml does not exist. Please run helm:create-values command.');
-            }
 
-            if ($deploy->chartLocal->valuesKeyOfLocalDirectory) {
-                $values.= ' --set '.$deploy->chartLocal->valuesKeyOfLocalDirectory.'=' . $workingDirectory;
-            }
+            $values = $this->valuesCmdBuilding($deploy, $workingDirectory);
 
-            $cmd = ['helm', 'upgrade', '--create-namespace', '-n', $deploy->namespace, '--install', $projectName.'-'.$deploy->appEnvironment];
+            CurCom::get()->info('Installing '.$installableEntityName.' from "'.$deploy->chartLocal->chartPath.'" into namespace '.$deploy->namespace);
+            $cmd = ['helm', 'upgrade', '--create-namespace', '-n', $deploy->namespace, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
             foreach (explode(' ', $values) as $word) {
                 $cmd[] = $word;
             }
             $cmd[] = $deploy->chartLocal->chartPath;
+            $process = new Process($cmd);
+            $process->setTty(true);
+            $process->run();
+        }
+    }
+
+    public function render(Deploy $deploy, string $installableEntityName, string $workingDirectory) {
+        if ($deploy->chartLocal === null) {
+            $repoName = $this->config->getProjectName().'-'.$installableEntityName;
+            CurCom::get()->info('Working with remote repo: '.$repoName);
+
+            $values = $this->valuesCmdBuilding($deploy, $workingDirectory);
+
+            CurCom::get()->info('Removing old repo: '.$repoName);
+            $cmd = ['helm', 'repo', 'remove', $repoName, $deploy->chartRemote->repoUrl];
+            $process = new Process($cmd);
+            $process->run();
+
+
+            CurCom::get()->info('Adding Repo: '.$repoName);
+            $cmd = ['helm', 'repo', 'add', $repoName, $deploy->chartRemote->repoUrl];
+            $process = new Process($cmd);
+            $process->setTty(true);
+            $process->run();
+
+            CurCom::get()->info('Running helm update...');
+            $cmd = ['helm', 'repo', 'update', $repoName];
+            $process = new Process($cmd);
+            $process->setTty(true);
+            $process->run();
+
+            CurCom::get()->info('Rendering '.$installableEntityName.' from '.$deploy->chartRemote->repoUrl.' version '.$deploy->chartRemote->version.' into namespace '.$deploy->namespace);
+            $cmd = ['helm', 'template', '-n', $deploy->namespace, '--version', $deploy->chartRemote->version, $installableEntityName.'-'.$deploy->appEnvironment];
+
+            foreach (explode(' ', $values) as $word) {
+                $cmd[] = $word;
+            }
+            $cmd[] = $repoName.'/'.$installableEntityName;
+            $process = new Process($cmd);
+            $process->setTty(true);
+            $process->run();
+        } else {
+            $values = $this->valuesCmdBuilding($deploy, $workingDirectory);
+
+            CurCom::get()->info('Rendering '.$installableEntityName.' from "'.$deploy->chartLocal->chartPath.'" into namespace '.$deploy->namespace);
+            $cmd = ['helm', 'template', '-n', $deploy->namespace, $installableEntityName.'-'.$deploy->appEnvironment, $deploy->chartLocal->chartPath];
+            foreach (explode(' ', $values) as $word) {
+                $cmd[] = $word;
+            }
             $process = new Process($cmd);
             $process->setTty(true);
             $process->run();
@@ -71,22 +194,43 @@ class HelmTool
     {
         $envPath = $deploy->valuesByEnv;
         $currentEnv = $deploy->appEnvironment;
-        $commonParsed = Yaml::parseFile($envPath . '/common.values.yaml', YAML::PARSE_OBJECT);
-        if (!$commonParsed) {
+        if (file_exists($envPath . '/common.values.yaml')) {
+            $commonParsed = Yaml::parseFile($envPath . '/common.values.yaml', YAML::PARSE_OBJECT);
+            if (!$commonParsed) {
+                $commonParsed = [];
+            }
+        } else {
             $commonParsed = [];
         }
-        $valuesParsed = Yaml::parseFile($envPath . '/' . $currentEnv . '.values.yaml', YAML::PARSE_OBJECT);
-        if (!$valuesParsed) {
+
+
+        if (file_exists($envPath . '/' . $currentEnv . '.values.yaml')) {
+            $valuesParsed = Yaml::parseFile($envPath . '/' . $currentEnv . '.values.yaml', YAML::PARSE_OBJECT);
+            if (!$valuesParsed) {
+                $valuesParsed = [];
+            }
+        } else {
             $valuesParsed = [];
         }
-        $secretsParsed = Yaml::parseFile($envPath . '/secrets.values.yaml', YAML::PARSE_OBJECT);
-        if (!$secretsParsed) {
+
+        if (file_exists($envPath . '/secrets.values.yaml')) {
+            $secretsParsed = Yaml::parseFile($envPath . '/secrets.values.yaml', YAML::PARSE_OBJECT);
+            if (!$secretsParsed) {
+                $secretsParsed = [];
+            }
+        } else {
             $secretsParsed = [];
         }
-        $overridesParsed = Yaml::parseFile($envPath . '/overrides.values.yaml', YAML::PARSE_OBJECT);
-        if (!$overridesParsed) {
+
+        if (file_exists($envPath . '/overrides.values.yaml')) {
+            $overridesParsed = Yaml::parseFile($envPath . '/overrides.values.yaml', YAML::PARSE_OBJECT);
+            if (!$overridesParsed) {
+                $overridesParsed = [];
+            }
+        } else {
             $overridesParsed = [];
         }
+
         $values = array_replace_recursive(
             $commonParsed,
             $valuesParsed,
@@ -94,7 +238,7 @@ class HelmTool
             $overridesParsed
         );
         $dump = Yaml::dump($values, 8, 2);
-        file_put_contents($envPath . '/final.values.yaml', $dump);
+        file_put_contents($envPath . '/values.yaml', $dump);
 
 
     }
