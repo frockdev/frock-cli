@@ -25,7 +25,7 @@ class BumpMinor extends Command
             foreach ($tools as $tool) {
                 $this->info('Bumping minor version of ' . $tool->name);
                 $version = $manager->findHighestToolMinorVersion($tool);
-                $config->setNewSynchronizedToolsetVersion($this->argument('tool'), $version);
+                $config->setNewSynchronizedToolsetVersion($tool->name, $version);
             }
         }
         Artisan::call('tools:install', [], $this->output);

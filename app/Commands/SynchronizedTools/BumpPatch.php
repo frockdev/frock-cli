@@ -25,7 +25,7 @@ class BumpPatch extends Command
             foreach ($tools as $tool) {
                 $this->info('Bumping patch version of ' . $tool->name);
                 $version = $manager->findHighestToolPatchVersion($tool);
-                $config->setNewSynchronizedToolsetVersion($this->argument('tool'), $version);
+                $config->setNewSynchronizedToolsetVersion($tool->name, $version);
             }
         }
         Artisan::call('tools:install', [], $this->output);
