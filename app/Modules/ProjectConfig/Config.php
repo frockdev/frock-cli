@@ -205,6 +205,13 @@ class Config
         return trim(shell_exec('whoami'));
     }
 
+    public function ifBoxShouldBeAutoDeployed(string $boxName): bool {
+        if (isset($this->config['boxes'][$boxName]['autoDeployTo'])) {
+            return in_array($this->getAppEnv(), $this->config['boxes'][$boxName]['autoDeployTo']);
+        }
+        return false;
+    }
+
     /**
      * @return array|Deploy[]
      * @throws \Exception

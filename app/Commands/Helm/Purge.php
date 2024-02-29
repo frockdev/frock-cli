@@ -16,6 +16,15 @@ class Purge extends Command
         $this->info('Purging...');
 
         $helmtool->purge($config->getDeployConfig(), $config->getProjectName());
+
+        $boxes = $config->getBoxes();
+
+        foreach ($boxes as $boxName=>$box) {
+            if ($config->ifBoxShouldBeAutoDeployed($boxName)) {
+                $this->info('Purging box: '.$boxName);
+                $helmtool->purge($box, $boxName);
+            }
+        }
         $this->info('Purged!');
     }
 }

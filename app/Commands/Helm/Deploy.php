@@ -28,6 +28,16 @@ class Deploy extends Command
         } else {
             $this->info('Deploying Helm chart');
             $helmTool->deploy($deploy, $config->getProjectName(), $config->getWorkingDir());
+
+            $boxes = $config->getBoxes();
+
+            foreach ($boxes as $boxName=>$box) {
+                if ($config->ifBoxShouldBeAutoDeployed($boxName)) {
+                    $this->info('Deploying box: '.$boxName);
+                    $helmTool->deploy($box, $boxName, $config->getWorkingDir());
+                }
+            }
+
         }
 
     }
