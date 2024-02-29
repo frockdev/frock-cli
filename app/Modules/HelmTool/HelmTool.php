@@ -162,8 +162,13 @@ class HelmTool
                 $cmd[] = $word;
             }
             $process = new Process($cmd);
-            $process->setTty($this->config->getTtyEnabled());
+            $process->setTty(false);
             $process->run();
+            if ($process->isSuccessful()) {
+                echo $process->getOutput()."\n";
+            } else {
+                echo $process->getErrorOutput()."\n";
+            }
         }
     }
 
