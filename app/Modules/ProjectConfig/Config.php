@@ -34,6 +34,14 @@ class Config
 
     }
 
+    public function getTtyEnabled() {
+        if (getenv('TTY_DISABLED')) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     private function readEnvVariables() {
         $variables = [
             self::NAMESPACE,

@@ -22,11 +22,11 @@ class HelmTool
     public function purge(Deploy $deploy, string $entityToPurge ) {
         $cmd = ['helm', 'uninstall', '-n', $deploy->namespace, $entityToPurge.'-'.$deploy->appEnvironment];
         $process = new Process($cmd);
-        $process->setTty(true);
+        $process->setTty($this->config->getTtyEnabled());
         $process->run();
         $cmd = ['kubectl', 'delete', 'ns', $deploy->namespace];
         $process = new Process($cmd);
-        $process->setTty(true);
+        $process->setTty($this->config->getTtyEnabled());
         $process->run();
     }
 
@@ -80,13 +80,13 @@ class HelmTool
             CurCom::get()->info('Adding Repo: '.$repoName);
             $cmd = ['helm', 'repo', 'add', $repoName, $deploy->chartRemote->repoUrl];
             $process = new Process($cmd);
-            $process->setTty(true);
+            $process->setTty($this->config->getTtyEnabled());
             $process->run();
 
             CurCom::get()->info('Running helm update...');
             $cmd = ['helm', 'repo', 'update', $repoName];
             $process = new Process($cmd);
-            $process->setTty(true);
+            $process->setTty($this->config->getTtyEnabled());
             $process->run();
 
 
@@ -98,7 +98,7 @@ class HelmTool
             }
             $cmd[] = $repoName.'/'.$installableEntityName;
             $process = new Process($cmd);
-            $process->setTty(true);
+            $process->setTty($this->config->getTtyEnabled());
             $process->run();
 
 
@@ -113,7 +113,7 @@ class HelmTool
             }
             $cmd[] = $deploy->chartLocal->chartPath;
             $process = new Process($cmd);
-            $process->setTty(true);
+            $process->setTty($this->config->getTtyEnabled());
             $process->run();
         }
     }
@@ -134,13 +134,13 @@ class HelmTool
             CurCom::get()->info('Adding Repo: '.$repoName);
             $cmd = ['helm', 'repo', 'add', $repoName, $deploy->chartRemote->repoUrl];
             $process = new Process($cmd);
-            $process->setTty(true);
+            $process->setTty($this->config->getTtyEnabled());
             $process->run();
 
             CurCom::get()->info('Running helm update...');
             $cmd = ['helm', 'repo', 'update', $repoName];
             $process = new Process($cmd);
-            $process->setTty(true);
+            $process->setTty($this->config->getTtyEnabled());
             $process->run();
 
             CurCom::get()->info('Rendering '.$installableEntityName.' from '.$deploy->chartRemote->repoUrl.' version '.$deploy->chartRemote->version.' into namespace '.$deploy->namespace);
@@ -151,7 +151,7 @@ class HelmTool
             }
             $cmd[] = $repoName.'/'.$installableEntityName;
             $process = new Process($cmd);
-            $process->setTty(true);
+            $process->setTty($this->config->getTtyEnabled());
             $process->run();
         } else {
             $values = $this->valuesCmdBuilding($deploy, $workingDirectory);
@@ -162,7 +162,7 @@ class HelmTool
                 $cmd[] = $word;
             }
             $process = new Process($cmd);
-            $process->setTty(true);
+            $process->setTty($this->config->getTtyEnabled());
             $process->run();
         }
     }

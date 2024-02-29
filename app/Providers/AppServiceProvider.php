@@ -70,7 +70,7 @@ class AppServiceProvider extends ServiceProvider
                     } elseif ($this->command->type==\App\Modules\ConfigObjects\Command::RAW_TYPE) {
                         $runnable = $this->command->command;
                         $process = new Process($runnable);
-                        $process->setTty(true);
+                        $process->setTty($config->getTtyEnabled());
                         $process->setIdleTimeout(null);
                         $process->setTimeout(null);
                         $process->run();
