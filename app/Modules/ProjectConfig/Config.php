@@ -42,7 +42,7 @@ class Config
         }
     }
 
-    private function readEnvVariables() {
+    private function notifyAboutReadVariables() {
         $variables = [
             self::NAMESPACE,
             self::APP_ENV,
@@ -81,6 +81,7 @@ class Config
     public function __construct()
     {
         $this->config = array_merge($this->readConfig(), $this->readOverridenConfig());
+        $this->notifyAboutReadVariables();
         $this->projectName = $this->config['projectName'];
 
     }
