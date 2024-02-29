@@ -37,34 +37,34 @@ class AppServiceProvider extends ServiceProvider
                     $this->clusterManager = $clusterManager;
                 }
 
-                public function handle() {
+                public function handle(Config $config) {
 
                     if ($this->command->type==\App\Modules\ConfigObjects\Command::ARTISAN_TYPE) {
 
                         $runnable = ['php', 'artisan', ...$this->command->command];
-                        $pod = $this->clusterManager->findPodByLabelAndNamespace('containerForDeveloper', 'true', $this->namespace);
+                        $pod = $this->clusterManager->findPodByLabelsAndNamespace($config->getDevContainerLabels(), $this->namespace);
                         $this->clusterManager->execDevCommand($this->namespace, $pod, $runnable, $this->command->debug);
 
                     } elseif ($this->command->type==\App\Modules\ConfigObjects\Command::FROCK_TYPE) {
                         $runnable = ['php', 'vendor/bin/frock.php', ...$this->command->command];
-                        $pod = $this->clusterManager->findPodByLabelAndNamespace('containerForDeveloper', 'true', $this->namespace);
+                        $pod = $this->clusterManager->findPodByLabelsAndNamespace($config->getDevContainerLabels(), $this->namespace);
                         $this->clusterManager->execDevCommand($this->namespace, $pod, $runnable, $this->command->debug);
                     } elseif ($this->command->type==\App\Modules\ConfigObjects\Command::COMPOSER_TYPE) {
 
                         $runnable = ['composer', ...$this->command->command];
-                        $pod = $this->clusterManager->findPodByLabelAndNamespace('containerForDeveloper', 'true', $this->namespace);
+                        $pod = $this->clusterManager->findPodByLabelsAndNamespace($config->getDevContainerLabels(), $this->namespace);
                         $this->clusterManager->execDevCommand($this->namespace, $pod, $runnable, $this->command->debug);
 
                     } elseif ($this->command->type==\App\Modules\ConfigObjects\Command::PHP_TYPE) {
 
                         $runnable = ['php', ...$this->command->command];
-                        $pod = $this->clusterManager->findPodByLabelAndNamespace('containerForDeveloper', 'true', $this->namespace);
+                        $pod = $this->clusterManager->findPodByLabelsAndNamespace($config->getDevContainerLabels(), $this->namespace);
                         $this->clusterManager->execDevCommand($this->namespace, $pod, $runnable, $this->command->debug);
 
                     } elseif ($this->command->type==\App\Modules\ConfigObjects\Command::BASH_TYPE) {
 
                         $runnable = $this->command->command;
-                        $pod = $this->clusterManager->findPodByLabelAndNamespace('containerForDeveloper', 'true', $this->namespace);
+                        $pod = $this->clusterManager->findPodByLabelsAndNamespace($config->getDevContainerLabels(), $this->namespace);
                         $this->clusterManager->execDevCommand($this->namespace, $pod, $runnable, $this->command->debug);
 
                     } elseif ($this->command->type==\App\Modules\ConfigObjects\Command::RAW_TYPE) {

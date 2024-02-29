@@ -2,7 +2,9 @@
 
 namespace App\Commands;
 
+use App\Modules\ProjectConfig\Config;
 use LaravelZero\Framework\Commands\Command;
+use Symfony\Component\Process\Process;
 use function Termwind\render;
 
 class CreateNewService extends Command
@@ -12,7 +14,7 @@ class CreateNewService extends Command
      *
      * @var string
      */
-    protected $signature = 'initialize {name=FrockExample}';
+    protected $signature = 'initialize';
 
     /**
      * The description of the command.
@@ -24,19 +26,20 @@ class CreateNewService extends Command
     /**
      * Execute the console command.
      */
-    public function handle( ): void
+    public function handle(Config $config): void
     {
+        $this->info('Initializing fresh laravel project...');
+        $docker = explode(' ', "docker run --rm -v ".$config->getWorkingDir().":/var/www -w /var/www --entrypoint bash vladitot/php83-swow-ubuntu-local -c");
+        $cmd = "composer create-project --prefer-dist laravel/laravel php";
+        $process = new Process([...$docker, $cmd]);
+        $process->setTty(true);
+        $process->run();
 
-
-
-
-//        render(<<<'HTML'
-//            <div class="py-1 ml-2">
-//                <div class="px-1 bg-blue-300 text-black">Laravel Zero</div>
-//                <em class="ml-1">
-//                  Simplicity is the ultimate sophistication.
-//                </em>
-//            </div>
-//        HTML);
+        $this->info('Installing frock-tools...');
+        $docker = explode(' ', "docker run --rm -v ".$config->getWorkingDir().":/var/www -w /var/www/php --entrypoint bash vladitot/php83-swow-ubuntu-local -c");
+        $cmd = "composer require frock-dev/tools-for-laravel";
+        $process = new Process([...$docker, $cmd]);
+        $process->setTty(true);
+        $process->run();
     }
 }

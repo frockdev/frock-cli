@@ -62,7 +62,7 @@ class DevelopmentPackagesManager
         $resultJson = json_encode($composerJson, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
         file_put_contents($this->config->getWorkingDir() . '/php/composer.json', $resultJson);
 
-        $podName = $this->kubernetesClusterManager->findPodByLabelAndNamespace('containerForDeveloper', 'true', $this->config->getNamespace());
+        $podName = $this->kubernetesClusterManager->findPodByLabelsAndNamespace($this->config->getDevContainerLabels(), $this->config->getNamespace());
         $this->kubernetesClusterManager->execDevCommand($this->config->getNamespace(), $podName, ['composer', 'require', $currentPackage->composerPackageName]);
 
 
@@ -91,7 +91,7 @@ class DevelopmentPackagesManager
         $resultJson = json_encode($composerJson, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
         file_put_contents($this->config->getWorkingDir() . '/php/composer.json', $resultJson);
 
-        $podName = $this->kubernetesClusterManager->findPodByLabelAndNamespace('containerForDeveloper', 'true', $this->config->getNamespace());
+        $podName = $this->kubernetesClusterManager->findPodByLabelsAndNamespace($this->config->getDevContainerLabels(), $this->config->getNamespace());
         $this->kubernetesClusterManager->execDevCommand($this->config->getNamespace(), $podName, ['composer', 'require', $currentPackage->composerPackageName]);
     }
 

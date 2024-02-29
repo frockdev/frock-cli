@@ -15,17 +15,40 @@ class KubernetesClusterManager
         $this->config = $config;
     }
 
-    public function findPodByLabelAndNamespace(string $labelKey, string $labelValue, string $namespace): string {
-        $cmd = 'kubectl -n '.$namespace.' get pods -l '.$labelKey.'='.$labelValue.' -o jsonpath=\'{.items[0].metadata.name}\'';
+    public function findPodByLabelsAndNamespace(array $labels, string $namespace): string {
+
+        $labelsString = '';
+        foreach ($labels as $key=>$value) {
+            $labelsString .= $key.'='.$value.',';
+        }
+        $labelsString = rtrim($labelsString, ',');
+
+        $cmd = 'kubectl -n '.$namespace.' get pods --selector '.$labelsString.' -o jsonpath=\'{.items[0].metadata.name}\'';
         $process = new Process(explode(' ', $cmd));
         $process->run();
         $podName = $process->getOutput();
 
         if (!$podName) {
-            throw new \Exception('Pod with label '.$labelKey.'='.$labelValue.' not found in namespace '.$namespace);
+            throw new \Exception('Pod with labels '.$labelsString.' not found in namespace '.$namespace);
         }
 
         return trim($podName, "'");
+    }
+
+    public function getPid(string $namespace, string $podName) {
+        $runnable = $this->config->getKubectlExecCommand($namespace, $podName);
+
+
+        $command = 'cat /.devspace/devspace-pid';
+
+        $runnable = [...$runnable, $command];
+
+        $process = new Process($runnable);
+        $process->setIdleTimeout(null);
+        $process->setTimeout(null);
+        $process->run();
+
+        return (int)$process->getOutput();
     }
 
     public function execDevCommand(string $namespace, string $podName, array $command, bool $debug = false) {
@@ -46,7 +69,6 @@ class KubernetesClusterManager
         $process = new Process($runnable);
         $process->setIdleTimeout(null);
         $process->setTimeout(null);
-        $process->setTty(true);
         $process->run();
     }
 

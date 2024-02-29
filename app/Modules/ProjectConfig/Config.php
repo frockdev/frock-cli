@@ -61,6 +61,10 @@ class Config
         }
     }
 
+    public function getDevContainerLabels() {
+        return $this->config['settings']['devcontainerLabels'] ?? [];
+    }
+
     public function getAppEnv() {
         if (!isset($this->config['deploy'])) throw new \Exception('You should set up "deploy" block in frock.yaml');
         return getenv(self::APP_ENV) ?getenv(self::APP_ENV): $this->config['deploy']['appEnvironment'];
