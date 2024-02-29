@@ -100,7 +100,14 @@ class HelmTool
             $process = new Process($cmd);
             $process->setTty($this->config->getTtyEnabled());
             $process->run();
-
+            if (!$this->config->getTtyEnabled()) {
+                if ($process->isSuccessful()) {
+                    echo $process->getOutput()."\n";
+                } else {
+                    echo $process->getErrorOutput()."\n";
+                    exit(1);
+                }
+            }
 
         } else {
 
@@ -115,6 +122,14 @@ class HelmTool
             $process = new Process($cmd);
             $process->setTty($this->config->getTtyEnabled());
             $process->run();
+            if (!$this->config->getTtyEnabled()) {
+                if ($process->isSuccessful()) {
+                    echo $process->getOutput()."\n";
+                } else {
+                    echo $process->getErrorOutput()."\n";
+                    exit(1);
+                }
+            }
         }
     }
 
@@ -153,6 +168,14 @@ class HelmTool
             $process = new Process($cmd);
             $process->setTty($this->config->getTtyEnabled());
             $process->run();
+            if (!$this->config->getTtyEnabled()) {
+                if ($process->isSuccessful()) {
+                    echo $process->getOutput()."\n";
+                } else {
+                    echo $process->getErrorOutput()."\n";
+                    exit(1);
+                }
+            }
         } else {
             $values = $this->valuesCmdBuilding($deploy, $workingDirectory);
 
@@ -162,12 +185,15 @@ class HelmTool
                 $cmd[] = $word;
             }
             $process = new Process($cmd);
-            $process->setTty(false);
+            $process->setTty($this->config->getTtyEnabled());
             $process->run();
-            if ($process->isSuccessful()) {
-                echo $process->getOutput()."\n";
-            } else {
-                echo $process->getErrorOutput()."\n";
+            if (!$this->config->getTtyEnabled()) {
+                if ($process->isSuccessful()) {
+                    echo $process->getOutput()."\n";
+                } else {
+                    echo $process->getErrorOutput()."\n";
+                    exit(1);
+                }
             }
         }
     }
