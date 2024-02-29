@@ -242,7 +242,7 @@ class Config
                         $deploy['chartRemote']['version'],
                         $deploy['chartRemote']['chartName']
                     ),
-                    valuesByEnv: $deploy['valuesByEnvDirectory'] ?? $this->getWorkingDir().'/values'
+                    valuesByEnv: $deploy['valuesByEnvDirectory'] ?? $this->getWorkingDir().'boxes/'.$boxName.'/values'
                 );
             } else {
                 $boxes[$boxName] = new Deploy(
@@ -259,7 +259,7 @@ class Config
                         valuesKeyOfLocalDirectory: $deploy['chartLocal']['valuesKeyOfLocalDirectory']??null
                     ),
                     chartRemote: null,
-                    valuesByEnv: $deploy['valuesByEnvDirectory'] ?? $this->getWorkingDir().'/values'
+                    valuesByEnv: $deploy['valuesByEnvDirectory'] ?? $this->getWorkingDir().'boxes/'.$boxName.'/values'
                 );
             }
         }
