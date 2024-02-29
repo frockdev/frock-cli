@@ -31,10 +31,6 @@ class HelmTool
     }
 
     private function valuesCmdBuilding(Deploy $deploy, string $workingDirectory) {
-        if (!file_exists($this->config->getWorkingDir().'/'.$deploy->finalValuesFilePath)) {
-            @mkdir($this->config->getWorkingDir().'/'.dirname($deploy->finalValuesFilePath), 0777, true);
-            touch($deploy->finalValuesFilePath);
-        }
         $valuesCmd = '-f '.$deploy->finalValuesFilePath;
 
         CurCom::get()->info('Loading Values from: '.$deploy->finalValuesFilePath);
@@ -64,6 +60,8 @@ class HelmTool
     }
 
     public function deploy(Deploy $deploy, string $installableEntityName, string $workingDirectory) {
+
+        $this->combineValues($deploy);
 
         if ($deploy->chartLocal === null) {
             $repoName = $this->config->getProjectName().'-'.$installableEntityName;
@@ -134,6 +132,9 @@ class HelmTool
     }
 
     public function render(Deploy $deploy, string $installableEntityName, string $workingDirectory) {
+
+        $this->combineValues($deploy);
+
         if ($deploy->chartLocal === null) {
             $repoName = $this->config->getProjectName().'-'.$installableEntityName;
             CurCom::get()->info('Working with remote repo: '.$repoName);
@@ -217,26 +218,41 @@ class HelmTool
         if ($deploy->chartLocal->chartVersion !== null) {
             $parsed['version'] = $deploy->chartLocal->chartVersion;
         }
-        file_put_contents($filename, Yaml::dump($parsed));
+        file_put_contents($filename, Yaml::dump($parsed, 8,2));
 
     }
 
     public function combineValues(Deploy $deploy)
     {
-        $envPath = $deploy->valuesByEnv;
+        @mkdir(dirname($deploy->finalValuesFilePath), 0777, true);
+        touch(dirname($deploy->finalValuesFilePath).'/.gitignore');
+        if (!$deploy->combineFinalValuesFromEnvAndOverrides) {
+            $gitignore = file_get_contents(dirname($deploy->finalValuesFilePath).'/.gitignore');
+            $gitignore = str_replace(basename($deploy->finalValuesFilePath), '', $gitignore);
+            $gitignore = str_replace("\n\n", "\n", $gitignore);
+            file_put_contents(dirname($deploy->finalValuesFilePath).'/.gitignore', $gitignore);
+            return;
+        } else {
+            $gitignore = file_get_contents(dirname($deploy->finalValuesFilePath).'/.gitignore');
+            $gitignore .= "\n".basename($deploy->finalValuesFilePath);
+            file_put_contents(dirname($deploy->finalValuesFilePath).'/.gitignore', $gitignore);
+        };
+        $valuesByEnvDirectoryPath = $deploy->valuesByEnv;
         $currentEnv = $deploy->appEnvironment;
-        if (file_exists($envPath . '/common.values.yaml')) {
-            $commonParsed = Yaml::parseFile($envPath . '/common.values.yaml', YAML::PARSE_OBJECT);
+        @mkdir($valuesByEnvDirectoryPath, 0777, true);
+        if (file_exists($valuesByEnvDirectoryPath . '/common.values.yaml')) {
+            $commonParsed = Yaml::parseFile($valuesByEnvDirectoryPath . '/common.values.yaml', YAML::PARSE_OBJECT);
             if (!$commonParsed) {
                 $commonParsed = [];
             }
         } else {
+            touch ($valuesByEnvDirectoryPath . '/common.values.yaml');
             $commonParsed = [];
         }
 
 
-        if (file_exists($envPath . '/' . $currentEnv . '.values.yaml')) {
-            $valuesParsed = Yaml::parseFile($envPath . '/' . $currentEnv . '.values.yaml', YAML::PARSE_OBJECT);
+        if (file_exists($valuesByEnvDirectoryPath . '/' . $currentEnv . '.values.yaml')) {
+            $valuesParsed = Yaml::parseFile($valuesByEnvDirectoryPath . '/' . $currentEnv . '.values.yaml', YAML::PARSE_OBJECT);
             if (!$valuesParsed) {
                 $valuesParsed = [];
             }
@@ -244,8 +260,8 @@ class HelmTool
             $valuesParsed = [];
         }
 
-        if (file_exists($envPath . '/secrets.values.yaml')) {
-            $secretsParsed = Yaml::parseFile($envPath . '/secrets.values.yaml', YAML::PARSE_OBJECT);
+        if (file_exists($valuesByEnvDirectoryPath . '/secrets.values.yaml')) {
+            $secretsParsed = Yaml::parseFile($valuesByEnvDirectoryPath . '/secrets.values.yaml', YAML::PARSE_OBJECT);
             if (!$secretsParsed) {
                 $secretsParsed = [];
             }
@@ -253,8 +269,8 @@ class HelmTool
             $secretsParsed = [];
         }
 
-        if (file_exists($envPath . '/overrides.values.yaml')) {
-            $overridesParsed = Yaml::parseFile($envPath . '/overrides.values.yaml', YAML::PARSE_OBJECT);
+        if (file_exists($valuesByEnvDirectoryPath . '/overrides.values.yaml')) {
+            $overridesParsed = Yaml::parseFile($valuesByEnvDirectoryPath . '/overrides.values.yaml', YAML::PARSE_OBJECT);
             if (!$overridesParsed) {
                 $overridesParsed = [];
             }
@@ -269,6 +285,7 @@ class HelmTool
             $overridesParsed
         );
         $dump = Yaml::dump($values, 8, 2);
+        @mkdir(dirname($deploy->finalValuesFilePath), 0777, true);
         file_put_contents($deploy->finalValuesFilePath, $dump);
 
 

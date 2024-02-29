@@ -18,9 +18,6 @@ class DeployAllBoxes extends Command
             $deploy = $box;
 
             $helmTool->putVersionsIfNeeded($deploy);
-            if ($deploy->combineFinalValuesFromEnvAndOverrides) {
-                $helmTool->combineValues($deploy);
-            }
 
             if ($this->option('render')) {
                 $this->info('Rendering Helm chart...');
