@@ -32,14 +32,14 @@ class CreateNewService extends Command
         $docker = explode(' ', "docker run --rm -v ".$config->getWorkingDir().":/var/www -w /var/www --entrypoint bash vladitot/php83-swow-ubuntu-local -c");
         $cmd = "composer create-project --prefer-dist laravel/laravel php";
         $process = new Process([...$docker, $cmd]);
-        $process->setTty($this->config->getTtyEnabled());
+        $process->setTty($config->getTtyEnabled());
         $process->run();
 
         $this->info('Installing frock-tools...');
         $docker = explode(' ', "docker run --rm -v ".$config->getWorkingDir().":/var/www -w /var/www/php --entrypoint bash vladitot/php83-swow-ubuntu-local -c");
         $cmd = "composer require frock-dev/tools-for-laravel";
         $process = new Process([...$docker, $cmd]);
-        $process->setTty($this->config->getTtyEnabled());
+        $process->setTty($config->getTtyEnabled());
         $process->run();
     }
 }
