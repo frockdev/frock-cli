@@ -67,9 +67,17 @@ class KubernetesClusterManager
         $runnable = [...$runnable, $command];
 
         $process = new Process($runnable);
+        $process->setTty($this->config->getTtyEnabled());
         $process->setIdleTimeout(null);
         $process->setTimeout(null);
         $process->run();
+        if (!$this->config->getTtyEnabled()) {
+            if ($process->isSuccessful()) {
+                echo $process->getOutput();
+            } else {
+                echo $process->getErrorOutput();
+            }
+        }
     }
 
 }
