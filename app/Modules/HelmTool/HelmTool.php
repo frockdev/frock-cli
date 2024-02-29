@@ -31,7 +31,7 @@ class HelmTool
     }
 
     private function valuesCmdBuilding(Deploy $deploy, string $workingDirectory) {
-        if (!file_exists($deploy->finalValuesFilePath)) {
+        if (!file_exists($this->config->getWorkingDir().'/'.$deploy->finalValuesFilePath)) {
             @mkdir($this->config->getWorkingDir().'/'.dirname($deploy->finalValuesFilePath), 0777, true);
             touch($deploy->finalValuesFilePath);
         }
@@ -238,7 +238,7 @@ class HelmTool
             $overridesParsed
         );
         $dump = Yaml::dump($values, 8, 2);
-        file_put_contents($envPath . '/values.yaml', $dump);
+        file_put_contents($deploy->finalValuesFilePath, $dump);
 
 
     }
