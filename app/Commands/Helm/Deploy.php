@@ -26,8 +26,6 @@ class Deploy extends Command
             $helmTool->render($deploy, $config->getProjectName(), $config->getWorkingDir());
             return;
         } else {
-            $this->info('Deploying Helm chart');
-            $helmTool->deploy($deploy, $config->getProjectName(), $config->getWorkingDir());
 
             $boxes = $config->getBoxes();
 
@@ -37,6 +35,9 @@ class Deploy extends Command
                     $helmTool->deploy($box, $boxName, $config->getWorkingDir());
                 }
             }
+
+            $this->info('Deploying Helm chart');
+            $helmTool->deploy($deploy, $config->getProjectName(), $config->getWorkingDir());
 
         }
 
