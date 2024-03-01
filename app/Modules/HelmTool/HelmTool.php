@@ -234,8 +234,11 @@ class HelmTool
             return;
         } else {
             $gitignore = file_get_contents(dirname($deploy->finalValuesFilePath).'/.gitignore');
-            $gitignore .= "\n".basename($deploy->finalValuesFilePath);
-            file_put_contents(dirname($deploy->finalValuesFilePath).'/.gitignore', $gitignore);
+            if (!preg_match('/^'.preg_quote($deploy->finalValuesFilePath).'$/', $gitignore)) {
+                $gitignore .= "\n" . basename($deploy->finalValuesFilePath);
+                file_put_contents(dirname($deploy->finalValuesFilePath) . '/.gitignore', $gitignore);
+            }
+
         };
         $valuesByEnvDirectoryPath = $deploy->valuesByEnv;
         $currentEnv = $deploy->appEnvironment;
