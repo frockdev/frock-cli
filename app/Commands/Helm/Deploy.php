@@ -9,7 +9,7 @@ use Illuminate\Console\Command;
 
 class Deploy extends Command
 {
-    protected $signature = 'deploy {--render}';
+    protected $signature = 'up {--render}';
 
     protected $description = 'Deploy the application or just render template if --render specified';
 

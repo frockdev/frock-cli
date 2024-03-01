@@ -8,7 +8,7 @@ use Illuminate\Console\Command;
 
 class Purge extends Command
 {
-    protected $signature = 'purge';
+    protected $signature = 'down';
 
     protected $description = 'Purge the application';
 

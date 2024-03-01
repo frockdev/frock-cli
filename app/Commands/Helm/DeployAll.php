@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Artisan;
 
 class DeployAll extends Command
 {
-    protected $signature = 'deploy-all';
+    protected $signature = 'up-all';
 
     protected $description = 'Deploy application and all boxes';
 

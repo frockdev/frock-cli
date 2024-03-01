@@ -9,7 +9,7 @@ use Illuminate\Console\Command;
 
 class RestartScript extends Command
 {
-    protected $signature = 'restart';
+    protected $signature = 'send-restart-to-app';
 
     protected $description = 'Send a restart signal to the server.';
 

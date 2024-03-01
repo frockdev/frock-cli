@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Artisan;
 
 class PurgeAll extends Command
 {
-    protected $signature = 'purge-all';
+    protected $signature = 'down-all';
 
     protected $description = 'Purge application and all boxes';
 
