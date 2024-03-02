@@ -73,6 +73,10 @@ class SynchronizedToolsManager
             $gitignore = array_reverse($gitignore);
             file_put_contents($copiedToolDir . '/.gitignore', implode("\n", $gitignore));
 
+            foreach ($tool->excludePaths as $excludePath) {
+                shell_exec('rm -rf ' . $copiedToolDir . '/' . $excludePath);
+            }
+
             $this->copyFiles($copiedToolDir, $tmpToolDir);
 
             $repo->addAllChanges('.');
