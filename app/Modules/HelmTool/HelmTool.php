@@ -226,19 +226,24 @@ class HelmTool
     {
         @mkdir(dirname($deploy->finalValuesFilePath), 0777, true);
         touch(dirname($deploy->finalValuesFilePath).'/.gitignore');
+        $gitignore = file_get_contents(dirname($deploy->finalValuesFilePath).'/.gitignore');
         if (!$deploy->combineFinalValuesFromEnvAndOverrides) {
-            $gitignore = file_get_contents(dirname($deploy->finalValuesFilePath).'/.gitignore');
             $gitignore = str_replace(basename($deploy->finalValuesFilePath), '', $gitignore);
             $gitignore = str_replace("\n\n", "\n", $gitignore);
             file_put_contents(dirname($deploy->finalValuesFilePath).'/.gitignore', $gitignore);
             return;
         } else {
-            $gitignore = file_get_contents(dirname($deploy->finalValuesFilePath).'/.gitignore');
-            if (!preg_match('/^'.preg_quote($deploy->finalValuesFilePath).'$/', $gitignore)) {
+            $found = false;
+            $explodedIgnore = explode("\n", $gitignore);
+            foreach ($explodedIgnore as $line) {
+                if (trim($line) === basename($deploy->finalValuesFilePath)) {
+                    $found = true;
+                }
+            }
+            if (!$found) {
                 $gitignore .= "\n" . basename($deploy->finalValuesFilePath);
                 file_put_contents(dirname($deploy->finalValuesFilePath) . '/.gitignore', $gitignore);
             }
-
         };
         $valuesByEnvDirectoryPath = $deploy->valuesByEnv;
         $currentEnv = $deploy->appEnvironment;
