@@ -34,6 +34,14 @@ class Config
 
     }
 
+    public function getLocalDirectoryPrefix() {
+        if (isset($this->config['settings']['localDirectoryPrefix'])) {
+            return $this->config['settings']['localDirectoryPrefix'];
+        } else {
+            return '';
+        }
+    }
+
     public function getTtyEnabled() {
         if (getenv('TTY_DISABLED')) {
             return false;
