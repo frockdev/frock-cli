@@ -34,14 +34,6 @@ class Config
 
     }
 
-    public function getLocalDirectoryPrefix() {
-        if (isset($this->config['settings']['localDirectoryPrefix'])) {
-            return $this->config['settings']['localDirectoryPrefix'];
-        } else {
-            return '';
-        }
-    }
-
     public function getTtyEnabled() {
         if (getenv('TTY_DISABLED')) {
             return false;
@@ -271,7 +263,8 @@ class Config
                         chartPath: $this->getWorkingDir().'/'.$deploy['chartLocal']['chartPath'],
                         appVersion: $this->getAppVersion(),
                         chartVersion: $this->getChartVersion(),
-                        valuesKeyOfLocalDirectory: $deploy['chartLocal']['valuesKeyOfLocalDirectory']??null
+                        valuesKeyOfLocalDirectory: $deploy['chartLocal']['valuesKeyOfLocalDirectory']??null,
+                        localDirectoryPrefix: $deploy['chartLocal']['localDirectoryPrefix']??''
                     ),
                     chartRemote: null,
                     valuesByEnv: $deploy['valuesByEnvDirectory'] ?? $this->getWorkingDir().'boxes/'.$boxName.'/values'
@@ -324,7 +317,8 @@ class Config
                     chartPath: $this->getWorkingDir().'/'.$this->config['deploy']['chartLocal']['chartPath'],
                     appVersion: $this->getAppVersion(),
                     chartVersion: $this->getChartVersion(),
-                    valuesKeyOfLocalDirectory: $this->config['deploy']['chartLocal']['valuesKeyOfLocalDirectory']??null
+                    valuesKeyOfLocalDirectory: $this->config['deploy']['chartLocal']['valuesKeyOfLocalDirectory']??null,
+                    localDirectoryPrefix: $this->config['deploy']['chartLocal']['localDirectoryPrefix']??''
                 ),
                 chartRemote: null,
                 valuesByEnv: $this->config['deploy']['valuesByEnvDirectory'] ?? $this->getWorkingDir().'/values'

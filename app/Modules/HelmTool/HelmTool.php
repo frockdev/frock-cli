@@ -37,7 +37,7 @@ class HelmTool
 
         if (isset($deploy->chartLocal->valuesKeyOfLocalDirectory)) {
             if ($deploy->chartLocal->valuesKeyOfLocalDirectory) {
-                $valuesCmd.= ' --set '.$deploy->chartLocal->valuesKeyOfLocalDirectory.'=' . $this->config->getLocalDirectoryPrefix().$workingDirectory;
+                $valuesCmd.= ' --set '.$deploy->chartLocal->valuesKeyOfLocalDirectory.'=' . $deploy->chartLocal->localDirectoryPrefix.$workingDirectory;
             }
         }
 

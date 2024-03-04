@@ -9,6 +9,7 @@ class ChartLocal
         public readonly ?string $appVersion,
         public readonly ?string $chartVersion,
         public readonly ?string $valuesKeyOfLocalDirectory,
+        public readonly ?string $localDirectoryPrefix,
     )
     {
     }
