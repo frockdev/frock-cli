@@ -2,6 +2,7 @@
 
 namespace App\Modules\SynchronizedTools;
 
+use App\CurCom;
 use App\Modules\ConfigObjects\SynchronizedTool;
 use App\Modules\ProjectConfig\Config;
 
@@ -82,8 +83,12 @@ class SynchronizedToolsManager
             $repo->addAllChanges('.');
             $branchName = 'changes-' . $tool->version . '-by-' . $this->config->getDeveloperName();
             $repo->createBranch($branchName, true);
-            $repo->commit('Changes by ' . $this->config->getDeveloperName());
-            $repo->push($branchName, ['--force-with-lease', '--set-upstream', 'origin']);
+            if ($repo->hasChanges()) {
+                $repo->commit('Changes by ' . $this->config->getDeveloperName());
+                $repo->push($branchName, ['--force-with-lease', '--set-upstream', 'origin']);
+            } else {
+                CurCom::get()->info('No changes to push');
+            }
         } finally {
             shell_exec('rm -rf ' . $copiedToolDir);
             shell_exec('rm -rf ' . $tmpToolDir);
