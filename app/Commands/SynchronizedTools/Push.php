@@ -2,6 +2,7 @@
 
 namespace App\Commands\SynchronizedTools;
 
+use App\CurCom;
 use App\Modules\ProjectConfig\Config;
 use App\Modules\SynchronizedTools\SynchronizedToolsManager;
 use Illuminate\Console\Command;
@@ -14,6 +15,7 @@ class Push extends Command
 
     public function handle(Config $config, SynchronizedToolsManager $manager)
     {
+        CurCom::setCommand($this);
         $tools = $config->getSynchronizedTools();
         if ($this->argument('tool')) {
             $this->info('Pushing ' . $this->argument('tool'));
