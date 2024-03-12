@@ -69,32 +69,13 @@ class HelmTool
             CurCom::get()->info('Working with remote repo: '.$repoName);
             $values = $this->valuesCmdBuilding($deploy, $workingDirectory);
 
-            //helm repo add
-            CurCom::get()->info('Removing old repo: '.$repoName);
-            $cmd = ['helm', 'repo', 'remove', $repoName, $deploy->chartRemote->repoUrl];
-            $process = new Process($cmd);
-            $process->run();
-
-            CurCom::get()->info('Adding Repo: '.$repoName);
-            $cmd = ['helm', 'repo', 'add', $repoName, $deploy->chartRemote->repoUrl];
-            $process = new Process($cmd);
-            $process->setTty($this->config->getTtyEnabled());
-            $process->run();
-
-            CurCom::get()->info('Running helm update...');
-            $cmd = ['helm', 'repo', 'update', $repoName];
-            $process = new Process($cmd);
-            $process->setTty($this->config->getTtyEnabled());
-            $process->run();
-
-
             CurCom::get()->info('Installing '.$installableEntityName.' from '.$deploy->chartRemote->repoUrl.' version '.$deploy->chartRemote->version.' into namespace '.$deploy->namespace);
-            $cmd = ['helm', 'upgrade', '--create-namespace', '-n', $deploy->namespace, '--version', $deploy->chartRemote->version, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
+            $cmd = ['helm', 'upgrade', '--repo', $deploy->chartRemote->repoUrl, '--create-namespace', '-n', $deploy->namespace, '--version', $deploy->chartRemote->version, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
 
             foreach (explode(' ', $values) as $word) {
                 $cmd[] = $word;
             }
-            $cmd[] = $repoName.'/'.$installableEntityName;
+            $cmd[] = $repoName;
             $process = new Process($cmd);
             $process->setTty($this->config->getTtyEnabled());
             $process->run();
