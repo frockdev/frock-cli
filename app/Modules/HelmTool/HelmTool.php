@@ -89,7 +89,29 @@ class HelmTool
 
 
             CurCom::get()->info('Installing '.$installableEntityName.' from '.$deploy->chartRemote->repoUrl.' version '.$deploy->chartRemote->version.' into namespace '.$deploy->namespace);
-            $cmd = ['helm', 'upgrade', '--create-namespace', '-n', $deploy->namespace, '--version', $deploy->chartRemote->version, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
+            if ($this->config->getRancherProjectReference()) {
+                file_put_contents($this->config->getWorkingDir().'/create-namespace.yaml', 'apiVersion: v1
+kind: Namespace
+metadata:
+  name: '.$this->config->getNamespace().'
+  annotations:
+    field.cattle.io/projectId: '.$this->config->getRancherProjectReference());
+                $cmd = ['kubectl', 'apply', '-f', $this->config->getWorkingDir().'/create-namespace.yaml'];
+                $process = new Process($cmd);
+                $process->setTty($this->config->getTtyEnabled());
+                $process->run();
+                if (!$this->config->getTtyEnabled()) {
+                    if ($process->isSuccessful()) {
+                        echo $process->getOutput()."\n";
+                    } else {
+                        echo $process->getErrorOutput()."\n";
+                        exit(1);
+                    }
+                }
+                $cmd = ['helm', 'upgrade', '-n', $deploy->namespace, '--version', $deploy->chartRemote->version, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
+            } else {
+                $cmd = ['helm', 'upgrade', '--create-namespace', '-n', $deploy->namespace, '--version', $deploy->chartRemote->version, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
+            }
 
             foreach (explode(' ', $values) as $word) {
                 $cmd[] = $word;
@@ -112,7 +134,30 @@ class HelmTool
             $values = $this->valuesCmdBuilding($deploy, $workingDirectory);
 
             CurCom::get()->info('Installing '.$installableEntityName.' from "'.$deploy->chartLocal->chartPath.'" into namespace '.$deploy->namespace);
-            $cmd = ['helm', 'upgrade', '--create-namespace', '-n', $deploy->namespace, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
+            if ($this->config->getRancherProjectReference()) {
+                file_put_contents($this->config->getWorkingDir() . '/create-namespace.yaml', 'apiVersion: v1
+kind: Namespace
+metadata:
+  name: ' . $this->config->getNamespace() . '
+  annotations:
+    field.cattle.io/projectId: ' . $this->config->getRancherProjectReference());
+                $cmd = ['kubectl', 'apply', '-f', $this->config->getWorkingDir() . '/create-namespace.yaml'];
+                $process = new Process($cmd);
+                $process->setTty($this->config->getTtyEnabled());
+                $process->run();
+                if (!$this->config->getTtyEnabled()) {
+                    if ($process->isSuccessful()) {
+                        echo $process->getOutput() . "\n";
+                    } else {
+                        echo $process->getErrorOutput() . "\n";
+                        exit(1);
+                    }
+                }
+                $cmd = ['helm', 'upgrade', '-n', $deploy->namespace, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
+            } else {
+                $cmd = ['helm', 'upgrade', '--create-namespace', '-n', $deploy->namespace, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
+            }
+
             foreach (explode(' ', $values) as $word) {
                 $cmd[] = $word;
             }

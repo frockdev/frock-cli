@@ -34,6 +34,10 @@ class Config
 
     }
 
+    public function getRancherProjectReference(): ?string {
+        return getenv('RANCHER_PROJECT_REFERENCE');
+    }
+
     public function getTtyEnabled() {
         if (getenv('TTY_DISABLED')) {
             return false;
