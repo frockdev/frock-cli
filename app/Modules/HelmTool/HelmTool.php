@@ -108,6 +108,7 @@ metadata:
                         exit(1);
                     }
                 }
+                shell_exec('rm -rf '.$this->config->getWorkingDir().'/create-namespace.yaml');
                 $cmd = ['helm', 'upgrade', '-n', $deploy->namespace, '--version', $deploy->chartRemote->version, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
             } else {
                 $cmd = ['helm', 'upgrade', '--create-namespace', '-n', $deploy->namespace, '--version', $deploy->chartRemote->version, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
@@ -153,6 +154,7 @@ metadata:
                         exit(1);
                     }
                 }
+                shell_exec('rm -rf '.$this->config->getWorkingDir().'/create-namespace.yaml');
                 $cmd = ['helm', 'upgrade', '-n', $deploy->namespace, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
             } else {
                 $cmd = ['helm', 'upgrade', '--create-namespace', '-n', $deploy->namespace, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
