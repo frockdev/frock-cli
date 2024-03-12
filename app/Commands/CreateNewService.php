@@ -37,7 +37,7 @@ class CreateNewService extends Command
 
         $this->info('Installing frock-tools...');
         $docker = explode(' ', "docker run --rm -v ".$config->getWorkingDir().":/var/www -w /var/www/php --entrypoint bash vladitot/php83-swow-ubuntu-local -c");
-        $cmd = "composer require frock-dev/tools-for-laravel";
+        $cmd = "composer require frock-dev/tools-for-laravel:^0.0";
         $process = new Process([...$docker, $cmd]);
         $process->setTty($config->getTtyEnabled());
         $process->run();
