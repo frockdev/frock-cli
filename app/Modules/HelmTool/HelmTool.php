@@ -96,6 +96,7 @@ metadata:
   name: '.$this->config->getNamespace().'
   annotations:
     field.cattle.io/projectId: '.$this->config->getRancherProjectReference());
+                echo file_get_contents($this->config->getWorkingDir() . '/create-namespace.yaml');
                 $cmd = ['kubectl', 'apply', '-f', $this->config->getWorkingDir().'/create-namespace.yaml'];
                 $process = new Process($cmd);
                 $process->setTty($this->config->getTtyEnabled());
@@ -142,6 +143,7 @@ metadata:
   name: ' . $this->config->getNamespace() . '
   annotations:
     field.cattle.io/projectId: ' . $this->config->getRancherProjectReference());
+                echo file_get_contents($this->config->getWorkingDir() . '/create-namespace.yaml');
                 $cmd = ['kubectl', 'apply', '-f', $this->config->getWorkingDir() . '/create-namespace.yaml'];
                 $process = new Process($cmd);
                 $process->setTty($this->config->getTtyEnabled());
