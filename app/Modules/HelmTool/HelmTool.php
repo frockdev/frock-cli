@@ -6,6 +6,7 @@ use App\CurCom;
 use App\Modules\ConfigObjects\Deploy;
 use App\Modules\ProjectConfig\Config;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Http;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Yaml\Yaml;
 
@@ -89,27 +90,16 @@ class HelmTool
 
 
             CurCom::get()->info('Installing '.$installableEntityName.' from '.$deploy->chartRemote->repoUrl.' version '.$deploy->chartRemote->version.' into namespace '.$deploy->namespace);
-            if ($this->config->getRancherProjectReference()) {
-                file_put_contents($this->config->getWorkingDir().'/create-namespace.yaml', 'apiVersion: v1
-kind: Namespace
-metadata:
-  name: '.$this->config->getNamespace().'
-  annotations:
-    field.cattle.io/projectId: '.$this->config->getRancherProjectReference());
-                echo file_get_contents($this->config->getWorkingDir() . '/create-namespace.yaml');
-                $cmd = ['kubectl', 'apply', '-f', $this->config->getWorkingDir().'/create-namespace.yaml'];
-                $process = new Process($cmd);
-                $process->setTty($this->config->getTtyEnabled());
-                $process->run();
-                if (!$this->config->getTtyEnabled()) {
-                    if ($process->isSuccessful()) {
-                        echo $process->getOutput()."\n";
-                    } else {
-                        echo $process->getErrorOutput()."\n";
-                        exit(1);
-                    }
+            if ($this->config->getNeedCreateRancherNamespace()) {
+                $response = Http::post($this->config->getRancherFullUrl().'/v3/cluster/'.$this->config->getRancherClusterId().'/namespaces', [
+                    'name' => $deploy->namespace,
+                    'projectId' => $this->config->getRancherClusterId().':'.$this->config->getRancherProjectId()
+                ]);
+                if ($response->status() !== 201 || $response->status() !== 409) {
+                    echo $response->body();
+                    $response->throw();
                 }
-                shell_exec('rm -rf '.$this->config->getWorkingDir().'/create-namespace.yaml');
+
                 $cmd = ['helm', 'upgrade', '-n', $deploy->namespace, '--version', $deploy->chartRemote->version, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
             } else {
                 $cmd = ['helm', 'upgrade', '--create-namespace', '-n', $deploy->namespace, '--version', $deploy->chartRemote->version, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
@@ -136,27 +126,15 @@ metadata:
             $values = $this->valuesCmdBuilding($deploy, $workingDirectory);
 
             CurCom::get()->info('Installing '.$installableEntityName.' from "'.$deploy->chartLocal->chartPath.'" into namespace '.$deploy->namespace);
-            if ($this->config->getRancherProjectReference()) {
-                file_put_contents($this->config->getWorkingDir() . '/create-namespace.yaml', 'apiVersion: v1
-kind: Namespace
-metadata:
-  name: ' . $this->config->getNamespace() . '
-  annotations:
-    field.cattle.io/projectId: ' . $this->config->getRancherProjectReference());
-                echo file_get_contents($this->config->getWorkingDir() . '/create-namespace.yaml');
-                $cmd = ['kubectl', 'apply', '-f', $this->config->getWorkingDir() . '/create-namespace.yaml'];
-                $process = new Process($cmd);
-                $process->setTty($this->config->getTtyEnabled());
-                $process->run();
-                if (!$this->config->getTtyEnabled()) {
-                    if ($process->isSuccessful()) {
-                        echo $process->getOutput() . "\n";
-                    } else {
-                        echo $process->getErrorOutput() . "\n";
-                        exit(1);
-                    }
+            if ($this->config->getNeedCreateRancherNamespace()) {
+                $response = Http::post($this->config->getRancherFullUrl().'/v3/cluster/'.$this->config->getRancherClusterId().'/namespaces', [
+                    'name' => $deploy->namespace,
+                    'projectId' => $this->config->getRancherClusterId().':'.$this->config->getRancherProjectId()
+                ]);
+                if ($response->status() !== 201 || $response->status() !== 409) {
+                    echo $response->body();
+                    $response->throw();
                 }
-                shell_exec('rm -rf '.$this->config->getWorkingDir().'/create-namespace.yaml');
                 $cmd = ['helm', 'upgrade', '-n', $deploy->namespace, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
             } else {
                 $cmd = ['helm', 'upgrade', '--create-namespace', '-n', $deploy->namespace, '--install', $installableEntityName.'-'.$deploy->appEnvironment];

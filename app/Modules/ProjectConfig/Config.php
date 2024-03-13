@@ -21,6 +21,13 @@ class Config
     const CHART_VERSION = 'CHART_VERSION';
     const APP_VERSION = 'APP_VERSION';
     const DEVELOPER_NAME = 'DEVELOPER_NAME';
+
+    const RANCHER_PROJECT_ID = 'RANCHER_PROJECT_ID';
+    const RANCHER_CLUSTER_ID = 'RANCHER_CLUSTER_ID';
+    const RANCHER_URL = 'RANCHER_URL';
+
+    const RANCHER_NEED_CREATE_NAMESPACE = 'RANCHER_NEED_CREATE_NAMESPACE';
+
     private array $config;
     private string $projectName;
 
@@ -34,8 +41,8 @@ class Config
 
     }
 
-    public function getRancherProjectReference(): ?string {
-        return getenv('RANCHER_PROJECT_REFERENCE');
+    public function getNeedCreateRancherNamespace(): ?string {
+        return (bool)getenv('RANCHER_NEED_CREATE_NAMESPACE');
     }
 
     public function getTtyEnabled() {
@@ -53,6 +60,10 @@ class Config
             self::CHART_VERSION,
             self::APP_VERSION,
             self::DEVELOPER_NAME,
+            self::RANCHER_PROJECT_ID,
+            self::RANCHER_CLUSTER_ID,
+            self::RANCHER_URL,
+            self::RANCHER_NEED_CREATE_NAMESPACE,
         ];
         foreach ($variables as $variable) {
             if (getenv($variable)) {
@@ -372,5 +383,20 @@ class Config
     public function getNamespace()
     {
         return getenv(self::NAMESPACE) ?: ($this->config['deploy']['namespace'] ?? $this->getProjectName().'-'.$this->getAppEnv());
+    }
+
+    public function getRancherFullUrl()
+    {
+        return getenv('RANCHER_URL') ?? throw new \Exception('RANCHER_URL is not set');
+    }
+
+    public function getRancherClusterId()
+    {
+        return getenv('RANCHER_CLUSTER_ID') ?? throw new \Exception('RANCHER_CLUSTER_ID is not set');
+    }
+
+    public function getRancherProjectId()
+    {
+        return getenv('RANCHER_PROJECT_ID') ?? throw new \Exception('RANCHER_PROJECT_ID is not set');
     }
 }
