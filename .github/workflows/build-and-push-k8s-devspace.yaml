@@ -39,7 +39,7 @@ jobs:
               with:
                   tags: vladitot/frock-cli:latest,vladitot/frock-cli:${{ github.ref_name }}
                   platforms: linux/amd64,linux/arm64
-                  args: FROCK_VERSION=${{ github.ref_name }}
+                  build-args: FROCK_VERSION=${{ github.ref_name }}
                   context: .
                   file: ./Dockerfile
                   no-cache-filters: final
