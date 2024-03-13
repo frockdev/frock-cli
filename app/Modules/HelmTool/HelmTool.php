@@ -105,7 +105,7 @@ class HelmTool
                         'name' => $deploy->namespace,
                         'projectId' => $this->config->getRancherClusterId().':'.$this->config->getRancherProjectId()
                     ]);
-                if ($response->status() !== 201 || $response->status() !== 409) {
+                if ($response->status() !== 201 && $response->status() !== 409) {
                     echo $response->body();
                     $response->throw();
                 }
@@ -142,7 +142,7 @@ class HelmTool
                         'name' => $deploy->namespace,
                         'projectId' => $this->config->getRancherClusterId().':'.$this->config->getRancherProjectId()
                     ]);
-                if ($response->status() !== 201 || $response->status() !== 409) {
+                if ($response->status() !== 201 && $response->status() !== 409) {
                     echo $response->body();
                     $response->throw();
                 }
