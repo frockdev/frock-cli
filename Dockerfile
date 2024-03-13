@@ -114,7 +114,7 @@ RUN wget --output-document=/usr/local/bin/devspace https://github.com/loft-sh/de
       && chmod +x /usr/local/bin/devspace
 
 RUN apk add --update --no-cache bash
-RUN apk add --update --no-cache php82 php82-phar php82-mbstring php82-openssl php82-tokenizer php82-fileinfo
+RUN apk add --update --no-cache php82 php82-phar php82-mbstring php82-openssl php82-tokenizer php82-fileinfo php82-session
 RUN rm -rf /usr/bin/php
 RUN ln -s /usr/bin/php82 /usr/bin/php
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
