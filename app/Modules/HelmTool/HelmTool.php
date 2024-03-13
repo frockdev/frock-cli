@@ -21,6 +21,15 @@ class HelmTool
     }
 
     public function purge(Deploy $deploy, string $entityToPurge ) {
+        if ($this->config->getNeedCreateRancherNamespace()) {
+
+            $response = Http::withHeader('Authorization', 'Bearer '.$this->config->getRancherToken())
+                ->delete($this->config->getRancherFullUrl().'/v3/cluster/'.$this->config->getRancherClusterId().'/namespaces/'.$deploy->namespace);
+            if ($response->status()!=200) {
+                echo $response->body();
+                $response->throw();
+            }
+        }
         $cmd = ['helm', 'uninstall', '-n', $deploy->namespace, $entityToPurge.'-'.$deploy->appEnvironment];
         $process = new Process($cmd);
         $process->setTty($this->config->getTtyEnabled());
@@ -91,10 +100,11 @@ class HelmTool
 
             CurCom::get()->info('Installing '.$installableEntityName.' from '.$deploy->chartRemote->repoUrl.' version '.$deploy->chartRemote->version.' into namespace '.$deploy->namespace);
             if ($this->config->getNeedCreateRancherNamespace()) {
-                $response = Http::post($this->config->getRancherFullUrl().'/v3/cluster/'.$this->config->getRancherClusterId().'/namespaces', [
-                    'name' => $deploy->namespace,
-                    'projectId' => $this->config->getRancherClusterId().':'.$this->config->getRancherProjectId()
-                ]);
+                $response = Http::withHeader('Authorization', 'Bearer '.$this->config->getRancherToken())
+                    ->post($this->config->getRancherFullUrl().'/v3/cluster/'.$this->config->getRancherClusterId().'/namespaces', [
+                        'name' => $deploy->namespace,
+                        'projectId' => $this->config->getRancherClusterId().':'.$this->config->getRancherProjectId()
+                    ]);
                 if ($response->status() !== 201 || $response->status() !== 409) {
                     echo $response->body();
                     $response->throw();
@@ -127,10 +137,11 @@ class HelmTool
 
             CurCom::get()->info('Installing '.$installableEntityName.' from "'.$deploy->chartLocal->chartPath.'" into namespace '.$deploy->namespace);
             if ($this->config->getNeedCreateRancherNamespace()) {
-                $response = Http::post($this->config->getRancherFullUrl().'/v3/cluster/'.$this->config->getRancherClusterId().'/namespaces', [
-                    'name' => $deploy->namespace,
-                    'projectId' => $this->config->getRancherClusterId().':'.$this->config->getRancherProjectId()
-                ]);
+                $response = Http::withHeader('Authorization', 'Bearer '.$this->config->getRancherToken())
+                    ->post($this->config->getRancherFullUrl().'/v3/cluster/'.$this->config->getRancherClusterId().'/namespaces', [
+                        'name' => $deploy->namespace,
+                        'projectId' => $this->config->getRancherClusterId().':'.$this->config->getRancherProjectId()
+                    ]);
                 if ($response->status() !== 201 || $response->status() !== 409) {
                     echo $response->body();
                     $response->throw();

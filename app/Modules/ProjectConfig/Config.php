@@ -26,6 +26,8 @@ class Config
     const RANCHER_CLUSTER_ID = 'RANCHER_CLUSTER_ID';
     const RANCHER_URL = 'RANCHER_URL';
 
+    const RANCHER_TOKEN = 'RANCHER_TOKEN';
+
     const RANCHER_NEED_CREATE_NAMESPACE = 'RANCHER_NEED_CREATE_NAMESPACE';
 
     private array $config;
@@ -64,10 +66,11 @@ class Config
             self::RANCHER_CLUSTER_ID,
             self::RANCHER_URL,
             self::RANCHER_NEED_CREATE_NAMESPACE,
+            self::RANCHER_TOKEN,
         ];
         foreach ($variables as $variable) {
             if (getenv($variable)) {
-                echo "Using $variable from environment: ".getenv($variable)."\n";
+                echo "Loading $variable from env variable..\n";
             }
         }
     }
@@ -398,5 +401,10 @@ class Config
     public function getRancherProjectId()
     {
         return getenv('RANCHER_PROJECT_ID') ?? throw new \Exception('RANCHER_PROJECT_ID is not set');
+    }
+
+    public function getRancherToken()
+    {
+        return getenv('RANCHER_TOKEN') ?? throw new \Exception('RANCHER_TOKEN is not set');
     }
 }
