@@ -314,6 +314,7 @@ class SynchronizedToolsManager
         if ($repo->hasChanges()) {
             $sha1 = sha1($gitlabBody);
             @$repo->execute('branch', '-D', 'tools-update-'. $sha1);
+            @$repo->removeRemote('origin2');
             $repo->createBranch('tools-update-'. $sha1, true);
             $repo->addAllChanges();
 
@@ -344,6 +345,7 @@ class SynchronizedToolsManager
             var_dump($e);
             throw ($e);
         } finally {
+            $repo->removeRemote('origin2');
             $repo->checkout($oldBranch);
         }
     }
