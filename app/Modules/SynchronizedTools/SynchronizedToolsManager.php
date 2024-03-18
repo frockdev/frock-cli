@@ -313,11 +313,21 @@ class SynchronizedToolsManager
         $oldBranch = $repo->getCurrentBranchName();
         if ($repo->hasChanges()) {
             $sha1 = sha1($gitlabBody);
-            echo 'Creating merge request for tools-update-'. $sha1 ."\n";
-            @$repo->execute('branch', '-D', 'tools-update-'. $sha1);
-            echo 'Branch deleted'."\n";
-            @$repo->removeRemote('origin2');
-            echo 'Remote removed'."\n";
+            try {
+                echo 'Creating merge request for tools-update-'. $sha1 ."\n";
+                $repo->execute('branch', '-D', 'tools-update-'. $sha1);
+                echo 'Branch deleted'."\n";
+            } catch (\Throwable $e) {
+                echo 'Error: '. $e->getMessage()."\n";
+            }
+
+            try {
+                $repo->removeRemote('origin2');
+                echo 'Remote removed'."\n";
+            } catch (\Throwable $e) {
+                echo 'Error: '. $e->getMessage()."\n";
+            }
+
             $repo->createBranch('tools-update-'. $sha1, true);
             echo 'Branch created'."\n";
             $repo->addAllChanges();
@@ -357,7 +367,12 @@ class SynchronizedToolsManager
             var_dump($e);
             throw ($e);
         } finally {
-            @$repo->removeRemote('origin2');
+            try {
+                $repo->removeRemote('origin2');
+            } catch (\Throwable $e) {
+                echo 'Error: '. $e->getMessage()."\n";
+            }
+
             $repo->checkout($oldBranch);
         }
     }
