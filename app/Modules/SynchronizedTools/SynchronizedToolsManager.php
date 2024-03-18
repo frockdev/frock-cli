@@ -344,6 +344,7 @@ class SynchronizedToolsManager
 
             echo 'Checking for existing merge request'."\n";
             $branches = Http::get($gitlabUrl.'/api/v4/projects/'.getenv('CI_PROJECT_ID').'/merge_requests?state=opened');
+            var_dump($gitlabUrl.'/api/v4/projects/'.getenv('CI_PROJECT_ID').'/merge_requests?state=opened');
             var_dump($branches->body());
             if ($branches->json('message') && $branches->json('message') === '404 Branch Not Found') {
                 echo 'Project not found'."\n";
