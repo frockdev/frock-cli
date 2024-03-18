@@ -313,6 +313,7 @@ class SynchronizedToolsManager
         $oldBranch = $repo->getCurrentBranchName();
         if ($repo->hasChanges()) {
             $sha1 = sha1($gitlabBody);
+            @$repo->removeBranch('tools-update-'. $sha1);
             $repo->createBranch('tools-update-'. $sha1, true);
             $repo->addAllChanges();
             $repo->commit('Changes by automated frock run');
