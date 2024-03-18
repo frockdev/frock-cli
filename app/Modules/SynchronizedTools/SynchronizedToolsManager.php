@@ -383,8 +383,11 @@ class SynchronizedToolsManager
             } catch (\Throwable $e) {
                 echo 'Error: '. $e->getMessage()."\n";
             }
-
-            $repo->checkout($oldBranch);
+            try {
+                $repo->checkout($oldBranch);
+            } catch (\Throwable $e) {
+                echo 'Error: '. $e->getMessage()."\n";
+            }
         }
     }
 
