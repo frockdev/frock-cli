@@ -119,6 +119,7 @@ RUN rm -rf /usr/bin/php
 RUN ln -s /usr/bin/php82 /usr/bin/php
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
 RUN apk add --update --no-cache openssh-client git
+RUN echo "StrictHostKeyChecking no" >> /etc/ssh_config
 FROM base as final
 ARG FROCK_VERSION
 RUN composer global require frockdev/frock-cli:${FROCK_VERSION}
