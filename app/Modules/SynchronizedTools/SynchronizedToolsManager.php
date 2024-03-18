@@ -313,16 +313,26 @@ class SynchronizedToolsManager
         $oldBranch = $repo->getCurrentBranchName();
         if ($repo->hasChanges()) {
             $sha1 = sha1($gitlabBody);
+            echo 'Creating merge request for tools-update-'. $sha1 ."\n";
             @$repo->execute('branch', '-D', 'tools-update-'. $sha1);
+            echo 'Branch deleted'."\n";
             @$repo->removeRemote('origin2');
+            echo 'Remote removed'."\n";
             $repo->createBranch('tools-update-'. $sha1, true);
+            echo 'Branch created'."\n";
             $repo->addAllChanges();
+            echo 'Changes added'."\n";
 
             $repo->addRemote('origin2', $repoUrl);
+            echo 'Remote added'."\n";
             $repo->commit('Changes by automated frock run');
+            echo 'Changes commited'."\n";
             $repo->push('tools-update-'. $sha1, ['--force', '--set-upstream', 'origin2']);
+            echo 'Changes pushed'."\n";
             $repo->removeRemote('origin2');
+            echo 'Remote removed'."\n";
 
+            echo 'Checking for existing merge request'."\n";
             $branches = Http::get($gitlabUrl.'/api/v4/projects/'.getenv('CI_PROJECT_ID').'/merge_requests?state=opened');
             var_dump($branches->body());
             foreach ($branches->json() as $branchInfo) {
@@ -330,6 +340,7 @@ class SynchronizedToolsManager
                     return;
                 }
             }
+            echo 'Creating merge request'."\n";
 
             $gitlabBody = 'Automated frock run'."\n".$gitlabBody;
             $response = Http::post($gitlabUrl.'/api/v4/projects/'.getenv('CI_PROJECT_ID'), [
