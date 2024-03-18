@@ -245,7 +245,7 @@ class SynchronizedToolsManager
         unset($currentVersion[0]);
         $highestMajoredVersion = $highestMajor.'.0.0';
         if ($vIsFirst) {
-            return 'v'.$highestMajoredVersion;
+            return 'v'.$this->findHighestMinorTag($tags, $highestMajoredVersion);
         }
         return $this->findHighestMinorTag($tags, $highestMajoredVersion);
     }
@@ -275,7 +275,7 @@ class SynchronizedToolsManager
         unset($currentVersion[1]);
         $highestMinoredVersion = $currentVersion[0].'.'.$highestMinor.'.0';
         if ($vIsFirst) {
-            return 'v'.$highestMinoredVersion;
+            return 'v'.$this->findHighestPatchTag($tags, $highestMinoredVersion);
         }
         return $this->findHighestPatchTag($tags, $highestMinoredVersion);
     }
