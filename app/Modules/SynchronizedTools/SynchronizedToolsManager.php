@@ -373,7 +373,7 @@ class SynchronizedToolsManager
             $response = Http::withHeader('Authorization', 'Bearer '.$password)->post($url, [
                 'source_branch' => 'tools-update-'. $sha1,
                 'remove_source_branch' => 'true',
-                'target_branch' => 'master',
+                'target_branch' => 'main',
                 'title' => 'Automated frock run',
                 'description' => $gitlabBody
             ]);
