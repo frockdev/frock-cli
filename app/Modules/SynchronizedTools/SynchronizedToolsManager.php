@@ -319,7 +319,7 @@ class SynchronizedToolsManager
 
             $repo->addRemote('origin2', $repoUrl);
             $repo->commit('Changes by automated frock run');
-            $repo->push('tools-update-'. $sha1, ['--force-with-lease', '--set-upstream', 'origin2']);
+            $repo->push('tools-update-'. $sha1, ['--force', '--set-upstream', 'origin2']);
             $repo->removeRemote('origin2');
 
             $branches = Http::get($gitlabUrl.'/api/v4/projects/'.getenv('CI_PROJECT_ID').'/merge_requests?state=opened');
