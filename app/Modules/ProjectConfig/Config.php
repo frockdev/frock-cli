@@ -27,6 +27,7 @@ class Config
     const RANCHER_URL = 'RANCHER_URL';
 
     const RANCHER_TOKEN = 'RANCHER_TOKEN';
+    const TTY_DISABLED = 'TTY_DISABLED';
 
     const RANCHER_NEED_CREATE_NAMESPACE = 'RANCHER_NEED_CREATE_NAMESPACE';
 
@@ -67,6 +68,7 @@ class Config
             self::RANCHER_URL,
             self::RANCHER_NEED_CREATE_NAMESPACE,
             self::RANCHER_TOKEN,
+            self::TTY_DISABLED,
         ];
         foreach ($variables as $variable) {
             if (getenv($variable)) {
