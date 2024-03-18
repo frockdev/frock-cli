@@ -415,4 +415,9 @@ class Config
     {
         return getenv('RANCHER_TOKEN') ?? throw new \Exception('RANCHER_TOKEN is not set');
     }
+
+    public function getIfWeNeedToWaitHelms()
+    {
+        return (bool)(getenv('WAIT_HELM_DEPLOY') ?? false);
+    }
 }

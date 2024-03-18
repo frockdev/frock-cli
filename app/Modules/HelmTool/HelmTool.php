@@ -99,6 +99,10 @@ class HelmTool
 
 
             CurCom::get()->info('Installing '.$installableEntityName.' from '.$deploy->chartRemote->repoUrl.' version '.$deploy->chartRemote->version.' into namespace '.$deploy->namespace);
+            $cmd = ['helm', 'upgrade'];
+            if ($this->config->getIfWeNeedToWaitHelms()) {
+                $cmd = [...$cmd, '--wait'];
+            }
             if ($this->config->getNeedCreateRancherNamespace()) {
                 $response = Http::withHeader('Authorization', 'Bearer '.$this->config->getRancherToken())
                     ->post($this->config->getRancherFullUrl().'/v3/cluster/'.$this->config->getRancherClusterId().'/namespaces', [
@@ -110,9 +114,9 @@ class HelmTool
                     $response->throw();
                 }
 
-                $cmd = ['helm', 'upgrade', '-n', $deploy->namespace, '--version', $deploy->chartRemote->version, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
+                $cmd = [...$cmd, '-n', $deploy->namespace, '--version', $deploy->chartRemote->version, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
             } else {
-                $cmd = ['helm', 'upgrade', '--create-namespace', '-n', $deploy->namespace, '--version', $deploy->chartRemote->version, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
+                $cmd = [...$cmd, '--create-namespace', '-n', $deploy->namespace, '--version', $deploy->chartRemote->version, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
             }
 
             foreach (explode(' ', $values) as $word) {
@@ -134,7 +138,10 @@ class HelmTool
         } else {
 
             $values = $this->valuesCmdBuilding($deploy, $workingDirectory);
-
+            $cmd = ['helm', 'upgrade'];
+            if ($this->config->getIfWeNeedToWaitHelms()) {
+                $cmd = [...$cmd, '--wait'];
+            }
             CurCom::get()->info('Installing '.$installableEntityName.' from "'.$deploy->chartLocal->chartPath.'" into namespace '.$deploy->namespace);
             if ($this->config->getNeedCreateRancherNamespace()) {
                 $response = Http::withHeader('Authorization', 'Bearer '.$this->config->getRancherToken())
@@ -146,9 +153,9 @@ class HelmTool
                     echo $response->body();
                     $response->throw();
                 }
-                $cmd = ['helm', 'upgrade', '-n', $deploy->namespace, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
+                $cmd = [...$cmd, '-n', $deploy->namespace, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
             } else {
-                $cmd = ['helm', 'upgrade', '--create-namespace', '-n', $deploy->namespace, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
+                $cmd = [...$cmd, '--create-namespace', '-n', $deploy->namespace, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
             }
 
             foreach (explode(' ', $values) as $word) {
