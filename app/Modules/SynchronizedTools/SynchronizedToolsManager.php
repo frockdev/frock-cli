@@ -367,7 +367,7 @@ class SynchronizedToolsManager
             }
             echo 'Creating merge request'."\n";
 
-            $url = $gitlabUrl.'/api/v4/projects/'.getenv('CI_PROJECT_ID');
+            $url = $gitlabUrl.'/api/v4/projects/'.getenv('CI_PROJECT_ID').'/merge_requests';
             $url = str_replace($user . ':' . $password . '@', '', $url);
             $gitlabBody = 'Automated frock run'."\n".$gitlabBody;
             echo 'Creating merge request'."\n";
