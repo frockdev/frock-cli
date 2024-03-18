@@ -317,7 +317,7 @@ class SynchronizedToolsManager
             $repo->createBranch('tools-update-'. $sha1, true);
             $repo->addAllChanges();
             $repo->commit('Changes by automated frock run');
-            $repo->push();
+            $repo->push('tools-update-'. $sha1, ['--force-with-lease', '--set-upstream', 'origin']);
 
             $branches = Http::get($gitlabUrl.'/api/v4/projects/'.getenv('CI_PROJECT_ID').'/merge_requests?state=opened');
             foreach ($branches as $branchInfo) {
