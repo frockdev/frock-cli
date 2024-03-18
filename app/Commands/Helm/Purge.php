@@ -21,6 +21,9 @@ class Purge extends Command
 
         foreach ($boxes as $boxName=>$box) {
             if ($config->ifBoxShouldBeAutoDeployed($boxName)) {
+                if ($config->getDeployConfig()->namespace==$box->namespace) {
+                    continue;
+                }
                 $this->info('Purging box: '.$boxName);
                 $helmtool->purge($box, $boxName);
             }
