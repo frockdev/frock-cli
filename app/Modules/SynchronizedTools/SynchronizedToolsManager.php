@@ -312,7 +312,7 @@ class SynchronizedToolsManager
         $repo = $git->open($this->config->getWorkingDir());
         $oldBranch = $repo->getCurrentBranchName();
         if ($repo->hasChanges()) {
-            $sha1 = sha1($gitlabBody);
+            $sha1 = substr(sha1($gitlabBody), 0, 9);
             try {
                 echo 'Creating merge request for tools-update-'. $sha1 ."\n";
                 $repo->execute('branch', '-D', 'tools-update-'. $sha1);
