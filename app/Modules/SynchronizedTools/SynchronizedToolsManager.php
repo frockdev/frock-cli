@@ -339,10 +339,12 @@ class SynchronizedToolsManager
             ]);
             echo $response->body()."\n";
         }
-        $repo->checkout($oldBranch);
+
         } catch (\Throwable $e) {
             var_dump($e);
             throw ($e);
+        } finally {
+            $repo->checkout($oldBranch);
         }
     }
 
