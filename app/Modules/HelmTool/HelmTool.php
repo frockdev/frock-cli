@@ -34,10 +34,28 @@ class HelmTool
         $process = new Process($cmd);
         $process->setTty($this->config->getTtyEnabled());
         $process->run();
+        if (!$this->config->getTtyEnabled()) {
+            if ($process->isSuccessful()) {
+                echo $process->getOutput()."\n";
+            } else {
+                echo $process->getOutput()."\n";
+                echo $process->getErrorOutput()."\n";
+                exit($process->getExitCode());
+            }
+        }
         $cmd = ['kubectl', 'delete', 'ns', $deploy->namespace];
         $process = new Process($cmd);
         $process->setTty($this->config->getTtyEnabled());
         $process->run();
+        if (!$this->config->getTtyEnabled()) {
+            if ($process->isSuccessful()) {
+                echo $process->getOutput()."\n";
+            } else {
+                echo $process->getOutput()."\n";
+                echo $process->getErrorOutput()."\n";
+                exit($process->getExitCode());
+            }
+        }
     }
 
     private function valuesCmdBuilding(Deploy $deploy, string $workingDirectory) {
