@@ -329,18 +329,12 @@ class SynchronizedToolsManager
             }
 
             $repo->createBranch('tools-update-'. $sha1, true);
-            echo 'Branch created'."\n";
             $repo->addAllChanges();
-            echo 'Changes added'."\n";
 
             $repo->addRemote('origin2', $repoUrl);
-            echo 'Remote added'."\n";
             $repo->commit('Changes by automated frock run');
-            echo 'Changes commited'."\n";
             $repo->push('tools-update-'. $sha1, ['--force', '--set-upstream', 'origin2']);
-            echo 'Changes pushed'."\n";
             $repo->removeRemote('origin2');
-            echo 'Remote removed'."\n";
 
             echo 'Checking for existing merge request'."\n";
 
@@ -355,7 +349,6 @@ class SynchronizedToolsManager
 
             $branches = Http::withHeader('Authorization', 'Bearer '.$password)->get($url);
 
-            var_dump($branches->body());
             if ($branches->json('message') && $branches->json('message') === '404 Branch Not Found') {
                 echo 'Project not found, maybe auth problem'."\n";
                 return;
@@ -365,7 +358,6 @@ class SynchronizedToolsManager
                     return;
                 }
             }
-            echo 'Creating merge request'."\n";
 
             $url = $gitlabUrl.'/api/v4/projects/'.getenv('CI_PROJECT_ID').'/merge_requests';
             $url = str_replace($user . ':' . $password . '@', '', $url);
@@ -378,11 +370,8 @@ class SynchronizedToolsManager
                 'title' => 'Automated frock run',
                 'description' => $gitlabBody
             ];
-            var_dump($data);
-            var_dump($url);
-            var_dump($password);
             $response = Http::withHeader('Authorization', 'Bearer '.$password)->post($url, $data);
-            var_dump($response->json());
+            var_dump($response->successful());
         }
 
         } catch (\Throwable $e) {
