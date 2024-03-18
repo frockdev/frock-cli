@@ -8,18 +8,25 @@ use Illuminate\Console\Command;
 
 class InstallTools extends Command
 {
-    protected $signature = 'tools:install';
+    protected $signature = 'tools:install {tool?}';
     protected $description = 'Download and install all synchronized tools';
 
     public function handle(Config $config, SynchronizedToolsManager $synchronizedToolsManager) {
         $tools = $config->getSynchronizedTools();
 
-        $synchronizedToolsManager->cleanAllTools();
+        if (!$this->argument('tool')) {
+            $synchronizedToolsManager->cleanAllTools();
 
-        foreach ($tools as $tool) {
-            $this->info('Installing ' . $tool->name);
-            $synchronizedToolsManager->installTool($tool);
+            foreach ($tools as $tool) {
+                $this->info('Installing ' . $tool->name);
+                $synchronizedToolsManager->installTool($tool);
+            }
+            $this->info('All tools installed');
+        } else {
+            $synchronizedToolsManager->cleanToolByName($this->argument('tool'));
+            $this->info('Installing ' . $this->argument('tool'));
+            $synchronizedToolsManager->installTool($tools[$this->argument('tool')] ?? throw new \Exception('Tool not installed'));
+            $this->info('Tool installed');
         }
-        $this->info('All tools installed');
     }
 }
