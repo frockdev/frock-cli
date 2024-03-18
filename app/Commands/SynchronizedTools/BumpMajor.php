@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Artisan;
 
 class BumpMajor extends Command
 {
-    protected $signature = 'tools:major {tool?} {gitlabUrl?}';
+    protected $signature = 'tools:major {tool?} {gitlabUrl?} {repoUrl?}';
 
     protected $description = 'Bump major version of all synchronized tools, or specified one by name';
 
@@ -27,7 +27,7 @@ class BumpMajor extends Command
             }
             Artisan::call('tools:install', ['tool'=>$this->argument('tool')], $this->output);
             if ($this->argument('gitlabUrl')) {
-                $manager->createGitlabMergeRequest($gitlabBody, $this->argument('gitlabUrl'));
+                $manager->createGitlabMergeRequest($gitlabBody, $this->argument('gitlabUrl'), $this->argument('repoUrl'));
             }
         } else {
             $this->info('Bumping major version of all synchronized tools');
@@ -41,7 +41,7 @@ class BumpMajor extends Command
                 }
                 Artisan::call('tools:install', ['tool'=>$tool->name], $this->output);
                 if ($this->argument('gitlabUrl')) {
-                    $manager->createGitlabMergeRequest($gitlabBody, $this->argument('gitlabUrl'));
+                    $manager->createGitlabMergeRequest($gitlabBody, $this->argument('gitlabUrl'), $this->argument('repoUrl'));
                 }
             }
         }

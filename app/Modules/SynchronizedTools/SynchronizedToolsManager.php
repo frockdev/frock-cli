@@ -305,7 +305,7 @@ class SynchronizedToolsManager
         }
     }
 
-    public function createGitlabMergeRequest(string $gitlabBody, string $gitlabUrl)
+    public function createGitlabMergeRequest(string $gitlabBody, string $gitlabUrl, string $repoUrl)
     {
         try {
         $git = new Git();
@@ -316,8 +316,11 @@ class SynchronizedToolsManager
             @$repo->execute('branch', '-D', 'tools-update-'. $sha1);
             $repo->createBranch('tools-update-'. $sha1, true);
             $repo->addAllChanges();
+
+            $repo->addRemote('origin2', $repoUrl);
             $repo->commit('Changes by automated frock run');
-            $repo->push('tools-update-'. $sha1, ['--force-with-lease', '--set-upstream', 'origin']);
+            $repo->push('tools-update-'. $sha1, ['--force-with-lease', '--set-upstream', 'origin2']);
+            $repo->removeRemote('origin2');
 
             $branches = Http::get($gitlabUrl.'/api/v4/projects/'.getenv('CI_PROJECT_ID').'/merge_requests?state=opened');
             foreach ($branches as $branchInfo) {

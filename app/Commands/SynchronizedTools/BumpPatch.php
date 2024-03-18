@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Artisan;
 
 class BumpPatch extends Command
 {
-    protected $signature = 'tools:patch {tool?} {gitlabUrl?}';
+    protected $signature = 'tools:patch {tool?} {gitlabUrl?} {repoUrl?}';
 
     protected $description = 'Bump patch version of all synchronized tools, or specified one by name';
 
@@ -27,7 +27,7 @@ class BumpPatch extends Command
             }
             Artisan::call('tools:install', ['tool'=>$this->argument('tool')], $this->output);
             if ($this->argument('gitlabUrl')) {
-                $manager->createGitlabMergeRequest($gitlabBody, $this->argument('gitlabUrl'));
+                $manager->createGitlabMergeRequest($gitlabBody, $this->argument('gitlabUrl'), $this->argument('repoUrl'));
             }
         } else {
             $this->info('Bumping patch version of all synchronized tools');
@@ -41,7 +41,7 @@ class BumpPatch extends Command
                 }
                 Artisan::call('tools:install', ['tool'=>$tool->name], $this->output);
                 if ($this->argument('gitlabUrl')) {
-                    $manager->createGitlabMergeRequest($gitlabBody, $this->argument('gitlabUrl'));
+                    $manager->createGitlabMergeRequest($gitlabBody, $this->argument('gitlabUrl'), $this->argument('repoUrl'));
                 }
             }
         }
