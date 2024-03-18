@@ -77,6 +77,7 @@ class KubernetesClusterManager
             if ($process->isSuccessful()) {
                 echo $process->getOutput();
             } else {
+                echo $process->getOutput();
                 echo $process->getErrorOutput();
             }
         }
