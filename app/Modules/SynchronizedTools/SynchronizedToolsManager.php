@@ -345,7 +345,7 @@ class SynchronizedToolsManager
             var_dump($e);
             throw ($e);
         } finally {
-            $repo->removeRemote('origin2');
+            @$repo->removeRemote('origin2');
             $repo->checkout($oldBranch);
         }
     }
