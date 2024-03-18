@@ -18,7 +18,7 @@ class Deploy
         public readonly array $redefineValuesFromYamlFiles = [],
         public readonly ?ChartLocal      $chartLocal = null,
         public readonly ?ChartRemote $chartRemote = null,
-        public readonly ?string      $valuesByEnv = '',
+        public readonly ?string      $valuesByEnv = ''
     )
     {
     }

@@ -260,10 +260,14 @@ class Config
             } else {
                 $finalValuesFilePath = ($deploy['valuesByEnvDirectory'] ?? 'boxes/'.$boxName.'/values').'/values.yaml';
             }
-
+            if ($deploy['sameNamespace']??false) {
+                $namespace = $this->getNamespace();
+            } else {
+                $namespace = $this->getNamespace().'-'.$boxName;
+            }
             if (isset($deploy['chartRemote']) && $deploy['chartRemote']) {
                 $boxes[$boxName] = new Deploy(
-                    namespace: $this->getNamespace().'-'.$boxName,
+                    namespace: $namespace,
                     appEnvironment: $this->getAppEnv(),
                     finalValuesFilePath: $finalValuesFilePath,
                     combineFinalValuesFromEnvAndOverrides: $deploy['combineFinalValuesFromEnvAndOverrides'] ?? true,
@@ -275,11 +279,11 @@ class Config
                         $deploy['chartRemote']['version'],
                         $deploy['chartRemote']['chartName']
                     ),
-                    valuesByEnv: $deploy['valuesByEnvDirectory'] ?? $this->getWorkingDir().'boxes/'.$boxName.'/values'
+                    valuesByEnv: $deploy['valuesByEnvDirectory'] ?? $this->getWorkingDir().'boxes/'.$boxName.'/values',
                 );
             } else {
                 $boxes[$boxName] = new Deploy(
-                    namespace: $this->getNamespace().'-'.$boxName,
+                    namespace: $namespace,
                     appEnvironment: $this->getAppEnv(),
                     finalValuesFilePath: $finalValuesFilePath,
                     combineFinalValuesFromEnvAndOverrides: $deploy['combineFinalValuesFromEnvAndOverrides'] ?? true,
