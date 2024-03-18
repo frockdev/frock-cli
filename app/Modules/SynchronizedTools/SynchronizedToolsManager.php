@@ -324,7 +324,8 @@ class SynchronizedToolsManager
             $repo->removeRemote('origin2');
 
             $branches = Http::get($gitlabUrl.'/api/v4/projects/'.getenv('CI_PROJECT_ID').'/merge_requests?state=opened');
-            foreach ($branches as $branchInfo) {
+            var_dump($branches->body());
+            foreach ($branches->json() as $branchInfo) {
                 if ($branchInfo['source_branch'] === 'tools-update-'. $sha1) {
                     return;
                 }
