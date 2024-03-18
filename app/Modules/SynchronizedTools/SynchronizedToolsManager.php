@@ -370,14 +370,19 @@ class SynchronizedToolsManager
             $url = $gitlabUrl.'/api/v4/projects/'.getenv('CI_PROJECT_ID');
             $url = str_replace($user . ':' . $password . '@', '', $url);
             $gitlabBody = 'Automated frock run'."\n".$gitlabBody;
-            $response = Http::withHeader('Authorization', 'Bearer '.$password)->post($url, [
+            echo 'Creating merge request'."\n";
+            $data = [
                 'source_branch' => 'tools-update-'. $sha1,
                 'remove_source_branch' => 'true',
                 'target_branch' => 'main',
                 'title' => 'Automated frock run',
                 'description' => $gitlabBody
-            ]);
-            echo $response->body()."\n";
+            ];
+            var_dump($data);
+            var_dump($url);
+            var_dump($password);
+            $response = Http::withHeader('Authorization', 'Bearer '.$password)->post($url, $data);
+            var_dump($response->json());
         }
 
         } catch (\Throwable $e) {
