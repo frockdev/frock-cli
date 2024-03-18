@@ -309,6 +309,7 @@ class SynchronizedToolsManager
     {
         $git = new Git();
         $repo = $git->open($this->config->getWorkingDir());
+        $oldBranch = $repo->getCurrentBranchName();
         if ($repo->hasChanges()) {
             $sha1 = sha1($gitlabBody);
             $repo->createBranch('tools-update-'. $sha1, true);
@@ -333,6 +334,7 @@ class SynchronizedToolsManager
             ]);
             echo $response->body()."\n";
         }
+        $repo->checkout($oldBranch);
     }
 
 

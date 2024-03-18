@@ -25,6 +25,10 @@ class BumpMinor extends Command
             if ($newVersion!=$oldVersion) {
                 $gitlabBody.= 'Bumped minor version of ' . $this->argument('tool') . ' from ' . $oldVersion . ' to ' . $newVersion . "\n";
             }
+            Artisan::call('tools:install', ['tool'=>$this->argument('tool')], $this->output);
+            if ($this->argument('gitlabUrl')) {
+                $manager->createGitlabMergeRequest($gitlabBody, $this->argument('gitlabUrl'));
+            }
         } else {
             $this->info('Bumping minor version of all synchronized tools');
             foreach ($tools as $tool) {
@@ -35,11 +39,11 @@ class BumpMinor extends Command
                 if ($newVersion!=$oldVersion) {
                     $gitlabBody.= 'Bumped minor version of ' . $tool->name . ' from ' . $oldVersion . ' to ' . $newVersion . "\n";
                 }
+                Artisan::call('tools:install', ['tool'=>$tool->name], $this->output);
+                if ($this->argument('gitlabUrl')) {
+                    $manager->createGitlabMergeRequest($gitlabBody, $this->argument('gitlabUrl'));
+                }
             }
-        }
-        Artisan::call('tools:install', [], $this->output);
-        if ($this->argument('gitlabUrl')) {
-            $manager->createGitlabMergeRequest($gitlabBody, $this->argument('gitlabUrl'));
         }
     }
 }
