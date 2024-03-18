@@ -118,6 +118,7 @@ RUN apk add --update --no-cache php82 php82-phar php82-mbstring php82-openssl ph
 RUN rm -rf /usr/bin/php
 RUN ln -s /usr/bin/php82 /usr/bin/php
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
+RUN apk add --update --no-cache openssh-client git
 FROM base as final
 ARG FROCK_VERSION
 RUN composer global require frockdev/frock-cli:${FROCK_VERSION}
