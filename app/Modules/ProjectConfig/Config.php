@@ -188,6 +188,65 @@ class Config
         return $result;
     }
 
+    public function getCurrentVersionOfTool(string $toolName) {
+        $yaml = file(getcwd().'/frock.yaml');
+        foreach ($yaml as &$line) {
+            $line = rtrim($line);
+        }
+        unset ($line);
+
+        $currentBlock = '';
+        $toolsAndVersions = [];
+        foreach ($yaml as $key=>$line) {
+            if (strpos($line, 'synchronizedTools:')!==false) {
+                $currentBlock = 'synchronizedTools';
+            }
+            if ($currentBlock!='synchronizedTools') {
+                continue;
+            }
+            if (strpos($line, 'name:')!==false) {
+                $toolsAndVersions[$key] = $line;
+                continue;
+            }
+            if (strpos($line, 'version:')!==false) {
+                $toolsAndVersions[$key] = $line;
+                continue;
+            }
+        }
+
+        $j=0;
+        $currentToolLine = '';
+        $currentVersionLine = '';
+        $currentVersionLineNumber = -1;
+        foreach ($toolsAndVersions as $key=>$line) {
+            if ($j>1) {
+                $j=0;
+                if ($currentVersionLine && $currentToolLine) {
+                    if (preg_match('/name:\s*[\'"]*'.$toolName.'[\'"]*/', $currentToolLine)) {
+                        $matches = [];
+                        preg_match('/v\d+\.\d+\.\d+/', $currentVersionLine, $matches);
+                        return $matches[0];
+                    }
+                }
+                $currentToolLine = '';
+                $currentVersionLine = '';
+                $currentVersionLineNumber = -1;
+            }
+            if (str_contains($line, 'name:')) {
+                $currentToolLine = $line;
+                $j++;
+                continue;
+            }
+            if (str_contains($line, 'version:')) {
+                $currentVersionLineNumber = $key;
+                $currentVersionLine = $line;
+                $j++;
+                continue;
+            }
+        }
+        throw new \Exception('Tool not found in frock.yaml');
+    }
+
     public function setNewSynchronizedToolsetVersion(string $toolName, string $newVersion): void {
 
         $yaml = file(getcwd().'/frock.yaml');
@@ -244,15 +303,6 @@ class Config
             }
         }
         file_put_contents(getcwd().'/frock.yaml', implode("\n", $yaml));
-
-//        foreach ($this->config['synchronizedTools'] as &$tool) {
-//            if ($tool['name'] === $toolName) {
-//                $tool['version'] = $newVersion;
-//                $yaml = Yaml::dump($this->config, 8, 4, Yaml::DUMP_MULTI_LINE_LITERAL_BLOCK);
-//                file_put_contents(getcwd().'/frock.yaml', $yaml);
-//                return;
-//            }
-//        }
 
     }
 

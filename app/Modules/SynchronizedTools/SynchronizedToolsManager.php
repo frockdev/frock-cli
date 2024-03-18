@@ -5,6 +5,8 @@ namespace App\Modules\SynchronizedTools;
 use App\CurCom;
 use App\Modules\ConfigObjects\SynchronizedTool;
 use App\Modules\ProjectConfig\Config;
+use CzProject\GitPhp\Git;
+use Illuminate\Support\Facades\Http;
 
 class SynchronizedToolsManager
 {
@@ -300,6 +302,36 @@ class SynchronizedToolsManager
                 shell_exec('rm -rf '.$tmpToolDir.'/'.$file);
                 shell_exec('cp '.$copiedToolDir.'/'.$file.' '.$tmpToolDir.'/'.$file);
             }
+        }
+    }
+
+    public function createGitlabMergeRequest(string $gitlabBody, string $gitlabUrl)
+    {
+        $git = new Git();
+        $repo = $git->open($this->config->getWorkingDir());
+        if ($repo->hasChanges()) {
+            $sha1 = sha1($gitlabBody);
+            $repo->createBranch('tools-update-'. $sha1, true);
+            $repo->addAllChanges();
+            $repo->commit('Changes by automated frock run');
+            $repo->push();
+
+            $branches = Http::get($gitlabUrl.'/api/v4/projects/'.getenv('CI_PROJECT_ID').'/merge_requests?state=opened');
+            foreach ($branches as $branchInfo) {
+                if ($branchInfo['source_branch'] === 'tools-update-'. $sha1) {
+                    return;
+                }
+            }
+
+            $gitlabBody = 'Automated frock run'."\n".$gitlabBody;
+            $response = Http::post($gitlabUrl.'/api/v4/projects/'.getenv('CI_PROJECT_ID'), [
+                'source_branch' => 'tools-update-'. $sha1,
+                'remove_source_branch' => 'true',
+                'target_branch' => 'master',
+                'title' => 'Automated frock run',
+                'description' => $gitlabBody
+            ]);
+            echo $response->body()."\n";
         }
     }
 

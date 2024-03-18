@@ -9,25 +9,37 @@ use Illuminate\Support\Facades\Artisan;
 
 class BumpPatch extends Command
 {
-    protected $signature = 'tools:patch {tool?}';
+    protected $signature = 'tools:patch {tool?} {gitlabUrl?}';
 
     protected $description = 'Bump patch version of all synchronized tools, or specified one by name';
 
     public function handle(Config $config, SynchronizedToolsManager $manager)
     {
+        $gitlabBody = '';
         $tools = $config->getSynchronizedTools();
         if ($this->argument('tool')) {
             $this->info('Bumping patch version of ' . $this->argument('tool'));
-            $version = $manager->findHighestToolPatchVersion($tools[$this->argument('tool')] ?? throw new \Exception('Tool not installed'));
-            $config->setNewSynchronizedToolsetVersion($this->argument('tool'), $version);
+            $newVersion = $manager->findHighestToolPatchVersion($tools[$this->argument('tool')] ?? throw new \Exception('Tool not installed'));
+            $oldVersion = $config->getCurrentVersionOfTool($this->argument('tool'));
+            $config->setNewSynchronizedToolsetVersion($this->argument('tool'), $newVersion);
+            if ($newVersion!=$oldVersion) {
+                $gitlabBody.= 'Bumped patch version of ' . $this->argument('tool') . ' from ' . $oldVersion . ' to ' . $newVersion . "\n";
+            }
         } else {
             $this->info('Bumping patch version of all synchronized tools');
             foreach ($tools as $tool) {
                 $this->info('Bumping patch version of ' . $tool->name);
-                $version = $manager->findHighestToolPatchVersion($tool);
-                $config->setNewSynchronizedToolsetVersion($tool->name, $version);
+                $newVersion = $manager->findHighestToolPatchVersion($tool);
+                $oldVersion = $config->getCurrentVersionOfTool($tool->name);
+                $config->setNewSynchronizedToolsetVersion($tool->name, $newVersion);
+                if ($newVersion!=$oldVersion) {
+                    $gitlabBody.= 'Bumped patch version of ' . $tool->name . ' from ' . $oldVersion . ' to ' . $newVersion . "\n";
+                }
             }
         }
         Artisan::call('tools:install', [], $this->output);
+        if ($this->argument('gitlabUrl')) {
+            $manager->createGitlabMergeRequest($gitlabBody, $this->argument('gitlabUrl'));
+        }
     }
 }

@@ -9,25 +9,37 @@ use Illuminate\Support\Facades\Artisan;
 
 class BumpMinor extends Command
 {
-    protected $signature = 'tools:minor {tool?}';
+    protected $signature = 'tools:minor {tool?} {gitlabUrl?}';
 
     protected $description = 'Bump minor version of all synchronized tools, or specified one by name';
 
     public function handle(Config $config, SynchronizedToolsManager $manager)
     {
+        $gitlabBody = '';
         $tools = $config->getSynchronizedTools();
         if ($this->argument('tool')) {
             $this->info('Bumping minor version of ' . $this->argument('tool'));
-            $version = $manager->findHighestToolMinorVersion($tools[$this->argument('tool')] ?? throw new \Exception('Tool not installed'));
-            $config->setNewSynchronizedToolsetVersion($this->argument('tool'), $version);
+            $newVersion = $manager->findHighestToolMinorVersion($tools[$this->argument('tool')] ?? throw new \Exception('Tool not installed'));
+            $oldVersion = $config->getCurrentVersionOfTool($this->argument('tool'));
+            $config->setNewSynchronizedToolsetVersion($this->argument('tool'), $newVersion);
+            if ($newVersion!=$oldVersion) {
+                $gitlabBody.= 'Bumped minor version of ' . $this->argument('tool') . ' from ' . $oldVersion . ' to ' . $newVersion . "\n";
+            }
         } else {
             $this->info('Bumping minor version of all synchronized tools');
             foreach ($tools as $tool) {
                 $this->info('Bumping minor version of ' . $tool->name);
-                $version = $manager->findHighestToolMinorVersion($tool);
-                $config->setNewSynchronizedToolsetVersion($tool->name, $version);
+                $newVersion = $manager->findHighestToolMinorVersion($tool);
+                $oldVersion = $config->getCurrentVersionOfTool($this->argument('tool'));
+                $config->setNewSynchronizedToolsetVersion($tool->name, $newVersion);
+                if ($newVersion!=$oldVersion) {
+                    $gitlabBody.= 'Bumped minor version of ' . $tool->name . ' from ' . $oldVersion . ' to ' . $newVersion . "\n";
+                }
             }
         }
         Artisan::call('tools:install', [], $this->output);
+        if ($this->argument('gitlabUrl')) {
+            $manager->createGitlabMergeRequest($gitlabBody, $this->argument('gitlabUrl'));
+        }
     }
 }
