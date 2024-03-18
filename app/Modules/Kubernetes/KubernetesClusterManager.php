@@ -79,6 +79,7 @@ class KubernetesClusterManager
             } else {
                 echo $process->getOutput();
                 echo $process->getErrorOutput();
+                exit($process->getExitCode());
             }
         }
     }
