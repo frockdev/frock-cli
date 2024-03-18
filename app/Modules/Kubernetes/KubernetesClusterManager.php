@@ -2,6 +2,7 @@
 
 namespace App\Modules\Kubernetes;
 
+use App\CurCom;
 use App\Modules\ProjectConfig\Config;
 use Symfony\Component\Process\Process;
 
@@ -67,6 +68,7 @@ class KubernetesClusterManager
         $runnable = [...$runnable, $command];
 
         $process = new Process($runnable);
+        echo 'TTY: '.(bool)$this->config->getTtyEnabled().PHP_EOL;
         $process->setTty($this->config->getTtyEnabled());
         $process->setIdleTimeout(null);
         $process->setTimeout(null);
