@@ -71,8 +71,14 @@ class Config
             self::TTY_DISABLED,
         ];
         foreach ($variables as $variable) {
-            if (getenv($variable)) {
-                echo "Loading $variable from env variable..\n";
+            if (in_array($variable, [self::TTY_DISABLED])) {
+                if (getenv($variable)) {
+                    echo "Loading $variable from env variable ".getenv($variable)."..\n";
+                }
+            } else {
+                if (getenv($variable)) {
+                    echo "Loading $variable from env variable..\n";
+                }
             }
         }
     }
