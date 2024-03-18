@@ -307,6 +307,7 @@ class SynchronizedToolsManager
 
     public function createGitlabMergeRequest(string $gitlabBody, string $gitlabUrl)
     {
+        try {
         $git = new Git();
         $repo = $git->open($this->config->getWorkingDir());
         $oldBranch = $repo->getCurrentBranchName();
@@ -335,6 +336,10 @@ class SynchronizedToolsManager
             echo $response->body()."\n";
         }
         $repo->checkout($oldBranch);
+        } catch (\Throwable $e) {
+            var_dump($e);
+            throw ($e);
+        }
     }
 
 
