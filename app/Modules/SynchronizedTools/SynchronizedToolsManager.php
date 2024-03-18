@@ -343,11 +343,21 @@ class SynchronizedToolsManager
             echo 'Remote removed'."\n";
 
             echo 'Checking for existing merge request'."\n";
-            $branches = Http::get($gitlabUrl.'/api/v4/projects/'.getenv('CI_PROJECT_ID').'/merge_requests?state=opened');
-            var_dump($gitlabUrl.'/api/v4/projects/'.getenv('CI_PROJECT_ID').'/merge_requests?state=opened');
+
+            $url = $gitlabUrl.'/api/v4/projects/'.getenv('CI_PROJECT_ID').'/merge_requests?state=opened';
+            $cut = str_replace('https://', '', $url);
+            $cut = explode('@', $cut);
+            $cut = explode(':', $cut[0]);
+            $user = $cut[0];
+            $password = $cut[1];
+
+            $url = str_replace($user . ':' . $password . '@', '', $url);
+
+            $branches = Http::withHeader('Authorization', 'Bearer '.$password)->get($url);
+
             var_dump($branches->body());
             if ($branches->json('message') && $branches->json('message') === '404 Branch Not Found') {
-                echo 'Project not found'."\n";
+                echo 'Project not found, maybe auth problem'."\n";
                 return;
             }
             foreach ($branches->json() as $branchInfo) {
@@ -357,8 +367,10 @@ class SynchronizedToolsManager
             }
             echo 'Creating merge request'."\n";
 
+            $url = $gitlabUrl.'/api/v4/projects/'.getenv('CI_PROJECT_ID');
+            $url = str_replace($user . ':' . $password . '@', '', $url);
             $gitlabBody = 'Automated frock run'."\n".$gitlabBody;
-            $response = Http::post($gitlabUrl.'/api/v4/projects/'.getenv('CI_PROJECT_ID'), [
+            $response = Http::withHeader('Authorization', 'Bearer '.$password)->post($url, [
                 'source_branch' => 'tools-update-'. $sha1,
                 'remove_source_branch' => 'true',
                 'target_branch' => 'master',
