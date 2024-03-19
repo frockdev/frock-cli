@@ -21,28 +21,32 @@ class BumpMinor extends Command
             $this->info('Bumping minor version of ' . $this->argument('tool'));
             $newVersion = $manager->findHighestToolMinorVersion($tools[$this->argument('tool')] ?? throw new \Exception('Tool not installed'));
             $oldVersion = $config->getCurrentVersionOfTool($this->argument('tool'));
-            $config->setNewSynchronizedToolsetVersion($this->argument('tool'), $newVersion);
+
             if (version_compare($newVersion, $oldVersion, '>')) {
+                $config->setNewSynchronizedToolsetVersion($this->argument('tool'), $newVersion);
                 $gitlabBody.= 'Bumped minor version of ' . $this->argument('tool') . ' from ' . $oldVersion . ' to ' . $newVersion . "\n";
+                Artisan::call('tools:install', ['tool'=>$this->argument('tool')], $this->output);
+                if ($this->argument('gitlabUrl')) {
+                    $manager->createGitlabMergeRequest($gitlabBody, $this->argument('gitlabUrl'), $this->argument('repoUrl'));
+                }
             }
-            Artisan::call('tools:install', ['tool'=>$this->argument('tool')], $this->output);
-            if ($this->argument('gitlabUrl')) {
-                $manager->createGitlabMergeRequest($gitlabBody, $this->argument('gitlabUrl'), $this->argument('repoUrl'));
-            }
+
         } else {
             $this->info('Bumping minor version of all synchronized tools');
             foreach ($tools as $tool) {
                 $this->info('Bumping minor version of ' . $tool->name);
                 $newVersion = $manager->findHighestToolMinorVersion($tool);
                 $oldVersion = $config->getCurrentVersionOfTool($this->argument('tool'));
-                $config->setNewSynchronizedToolsetVersion($tool->name, $newVersion);
+
                 if (version_compare($newVersion, $oldVersion, '>')) {
+                    $config->setNewSynchronizedToolsetVersion($tool->name, $newVersion);
                     $gitlabBody.= 'Bumped minor version of ' . $tool->name . ' from ' . $oldVersion . ' to ' . $newVersion . "\n";
+                    Artisan::call('tools:install', ['tool'=>$tool->name], $this->output);
+                    if ($this->argument('gitlabUrl')) {
+                        $manager->createGitlabMergeRequest($gitlabBody, $this->argument('gitlabUrl'), $this->argument('repoUrl'));
+                    }
                 }
-                Artisan::call('tools:install', ['tool'=>$tool->name], $this->output);
-                if ($this->argument('gitlabUrl')) {
-                    $manager->createGitlabMergeRequest($gitlabBody, $this->argument('gitlabUrl'), $this->argument('repoUrl'));
-                }
+
             }
         }
     }
