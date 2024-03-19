@@ -22,7 +22,7 @@ class BumpMinor extends Command
             $newVersion = $manager->findHighestToolMinorVersion($tools[$this->argument('tool')] ?? throw new \Exception('Tool not installed'));
             $oldVersion = $config->getCurrentVersionOfTool($this->argument('tool'));
             $config->setNewSynchronizedToolsetVersion($this->argument('tool'), $newVersion);
-            if ($newVersion!=$oldVersion) {
+            if (version_compare($newVersion, $oldVersion, '>')) {
                 $gitlabBody.= 'Bumped minor version of ' . $this->argument('tool') . ' from ' . $oldVersion . ' to ' . $newVersion . "\n";
             }
             Artisan::call('tools:install', ['tool'=>$this->argument('tool')], $this->output);
@@ -36,7 +36,7 @@ class BumpMinor extends Command
                 $newVersion = $manager->findHighestToolMinorVersion($tool);
                 $oldVersion = $config->getCurrentVersionOfTool($this->argument('tool'));
                 $config->setNewSynchronizedToolsetVersion($tool->name, $newVersion);
-                if ($newVersion!=$oldVersion) {
+                if (version_compare($newVersion, $oldVersion, '>')) {
                     $gitlabBody.= 'Bumped minor version of ' . $tool->name . ' from ' . $oldVersion . ' to ' . $newVersion . "\n";
                 }
                 Artisan::call('tools:install', ['tool'=>$tool->name], $this->output);
