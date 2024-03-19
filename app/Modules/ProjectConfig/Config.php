@@ -106,10 +106,14 @@ class Config
 
     public function __construct()
     {
+        $this->reloadConfig();
+    }
+
+    public function reloadConfig()
+    {
         $this->config = array_merge($this->readConfig(), $this->readOverridenConfig());
         $this->notifyAboutReadVariables();
         $this->projectName = $this->config['projectName'];
-
     }
 
     private function readConfig(): array {

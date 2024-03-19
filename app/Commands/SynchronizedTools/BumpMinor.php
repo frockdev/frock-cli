@@ -22,6 +22,9 @@ class BumpMinor extends Command
             $newVersion = $manager->findHighestToolMinorVersion($tools[$this->argument('tool')] ?? throw new \Exception('Tool not installed'));
             $oldVersion = $config->getCurrentVersionOfTool($this->argument('tool'));
 
+            $this->info('New version: ' . $newVersion);
+            $this->info('Old version: ' . $oldVersion);
+            $this->info('New bigger than old: ' . version_compare($newVersion, $oldVersion, '>'));
             if (version_compare($newVersion, $oldVersion, '>')) {
                 $config->setNewSynchronizedToolsetVersion($this->argument('tool'), $newVersion);
                 $gitlabBody.= 'Bumped minor version of ' . $this->argument('tool') . ' from ' . $oldVersion . ' to ' . $newVersion . "\n";
@@ -38,6 +41,9 @@ class BumpMinor extends Command
                 $newVersion = $manager->findHighestToolMinorVersion($tool);
                 $oldVersion = $config->getCurrentVersionOfTool($this->argument('tool'));
 
+                $this->info('New version: ' . $newVersion);
+                $this->info('Old version: ' . $oldVersion);
+                $this->info('New bigger than old: ' . version_compare($newVersion, $oldVersion, '>'));
                 if (version_compare($newVersion, $oldVersion, '>')) {
                     $config->setNewSynchronizedToolsetVersion($tool->name, $newVersion);
                     $gitlabBody.= 'Bumped minor version of ' . $tool->name . ' from ' . $oldVersion . ' to ' . $newVersion . "\n";

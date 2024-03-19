@@ -12,6 +12,7 @@ class InstallTools extends Command
     protected $description = 'Download and install all synchronized tools';
 
     public function handle(Config $config, SynchronizedToolsManager $synchronizedToolsManager) {
+        $config->reloadConfig(); //config should be reloaded, because maybe another components changed it
         $tools = $config->getSynchronizedTools();
 
         if (!$this->argument('tool')) {

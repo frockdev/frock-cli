@@ -21,7 +21,9 @@ class BumpMajor extends Command
             $this->info('Bumping major version of ' . $this->argument('tool'));
             $newVersion = $manager->findHighestToolMajorVersion($tools[$this->argument('tool')] ?? throw new \Exception('Tool not installed'));
             $oldVersion = $config->getCurrentVersionOfTool($this->argument('tool'));
-
+            $this->info('New version: ' . $newVersion);
+            $this->info('Old version: ' . $oldVersion);
+            $this->info('New bigger than old: ' . version_compare($newVersion, $oldVersion, '>'));
             if (version_compare($newVersion, $oldVersion, '>')) {
                 $config->setNewSynchronizedToolsetVersion($this->argument('tool'), $newVersion);
                 $gitlabBody.= 'Bumped major version of ' . $this->argument('tool') . ' from ' . $oldVersion . ' to ' . $newVersion . "\n";
@@ -37,6 +39,10 @@ class BumpMajor extends Command
                 $this->info('Bumping major version of ' . $tool->name);
                 $newVersion = $manager->findHighestToolMajorVersion($tool);
                 $oldVersion = $config->getCurrentVersionOfTool($tool->name);
+
+                $this->info('New version: ' . $newVersion);
+                $this->info('Old version: ' . $oldVersion);
+                $this->info('New bigger than old: ' . version_compare($newVersion, $oldVersion, '>'));
 
                 if (version_compare($newVersion, $oldVersion, '>')) {
                     $config->setNewSynchronizedToolsetVersion($tool->name, $newVersion);
