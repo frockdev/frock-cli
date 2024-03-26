@@ -39,33 +39,45 @@ class AppServiceProvider extends ServiceProvider
 
                 public function handle(Config $config) {
 
+                    if (!in_array($this->command->type, [
+                            \App\Modules\ConfigObjects\Command::ARTISAN_TYPE,
+                            \App\Modules\ConfigObjects\Command::FROCK_TYPE,
+                            \App\Modules\ConfigObjects\Command::COMPOSER_TYPE,
+                            \App\Modules\ConfigObjects\Command::RAW_TYPE,
+                            \App\Modules\ConfigObjects\Command::BASH_TYPE,
+                            \App\Modules\ConfigObjects\Command::PHP_TYPE,
+                    ])) {
+                        throw new \Exception('Invalid command type: ' . $this->command->signature . ' ' . $this->command->type);
+                    }
+
                     if ($this->command->type==\App\Modules\ConfigObjects\Command::ARTISAN_TYPE) {
 
                         $runnable = ['php', 'artisan', ...$this->command->command];
                         $pod = $this->clusterManager->findPodByLabelsAndNamespace($config->getDevContainerLabels(), $this->namespace);
-                        $this->clusterManager->execDevCommand($this->namespace, $pod, $runnable, $this->command->debug);
+                        return $this->clusterManager->execDevCommand($this->namespace, $pod, $runnable, $this->command->debug);
 
                     } elseif ($this->command->type==\App\Modules\ConfigObjects\Command::FROCK_TYPE) {
                         $runnable = ['php', 'vendor/bin/frock.php', ...$this->command->command];
                         $pod = $this->clusterManager->findPodByLabelsAndNamespace($config->getDevContainerLabels(), $this->namespace);
-                        $this->clusterManager->execDevCommand($this->namespace, $pod, $runnable, $this->command->debug);
+                        return $this->clusterManager->execDevCommand($this->namespace, $pod, $runnable, $this->command->debug);
+
                     } elseif ($this->command->type==\App\Modules\ConfigObjects\Command::COMPOSER_TYPE) {
 
                         $runnable = ['composer', ...$this->command->command];
                         $pod = $this->clusterManager->findPodByLabelsAndNamespace($config->getDevContainerLabels(), $this->namespace);
-                        $this->clusterManager->execDevCommand($this->namespace, $pod, $runnable, $this->command->debug);
+                        return $this->clusterManager->execDevCommand($this->namespace, $pod, $runnable, $this->command->debug);
 
                     } elseif ($this->command->type==\App\Modules\ConfigObjects\Command::PHP_TYPE) {
 
                         $runnable = ['php', ...$this->command->command];
                         $pod = $this->clusterManager->findPodByLabelsAndNamespace($config->getDevContainerLabels(), $this->namespace);
-                        $this->clusterManager->execDevCommand($this->namespace, $pod, $runnable, $this->command->debug);
+                        return $this->clusterManager->execDevCommand($this->namespace, $pod, $runnable, $this->command->debug);
 
                     } elseif ($this->command->type==\App\Modules\ConfigObjects\Command::BASH_TYPE) {
 
                         $runnable = $this->command->command;
                         $pod = $this->clusterManager->findPodByLabelsAndNamespace($config->getDevContainerLabels(), $this->namespace);
-                        $this->clusterManager->execDevCommand($this->namespace, $pod, $runnable, $this->command->debug);
+                        return $this->clusterManager->execDevCommand($this->namespace, $pod, $runnable, $this->command->debug);
 
                     } elseif ($this->command->type==\App\Modules\ConfigObjects\Command::RAW_TYPE) {
                         $runnable = $this->command->command;
@@ -74,11 +86,17 @@ class AppServiceProvider extends ServiceProvider
                         $process->setIdleTimeout(null);
                         $process->setTimeout(null);
                         $process->run();
-
+                        if (!$config->getTtyEnabled()) {
+                            if ($process->isSuccessful()) {
+                                echo $process->getOutput();
+                            } else {
+                                echo $process->getOutput();
+                                echo $process->getErrorOutput();
+                            }
+                        }
+                        return $process->getExitCode();
                     }
-                    if (!$runnable) {
-                        throw new \Exception('Invalid command type: ' . $this->command->signature . ' ' . $this->command->type);
-                    }
+                    throw new \Exception('Command was not executed: ' . $this->command->signature . ' ' . $this->command->type);
                 }
             };
         }

@@ -52,7 +52,7 @@ class KubernetesClusterManager
         return (int)$process->getOutput();
     }
 
-    public function execDevCommand(string $namespace, string $podName, array $command, bool $debug = false) {
+    public function execDevCommand(string $namespace, string $podName, array $command, bool $debug = false): int {
         $runnable = $this->config->getKubectlExecCommand($namespace, $podName);
 
         if ($debug) {
@@ -68,7 +68,7 @@ class KubernetesClusterManager
         $runnable = [...$runnable, $command];
 
         $process = new Process($runnable);
-        echo 'TTY: '.(bool)$this->config->getTtyEnabled().PHP_EOL;
+        echo 'TTY: '.$this->config->getTtyEnabled().PHP_EOL;
         $process->setTty($this->config->getTtyEnabled());
         $process->setIdleTimeout(null);
         $process->setTimeout(null);
@@ -79,9 +79,9 @@ class KubernetesClusterManager
             } else {
                 echo $process->getOutput();
                 echo $process->getErrorOutput();
-                exit($process->getExitCode());
             }
         }
+        return $process->getExitCode();
     }
 
 }
