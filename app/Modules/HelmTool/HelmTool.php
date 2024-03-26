@@ -133,9 +133,9 @@ class HelmTool
                     $response->throw();
                 }
 
-                $cmd = [...$cmd, '-n', $deploy->namespace, '--version', $deploy->chartRemote->version, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
+                $cmd = [...$cmd, '--timeout', '5m0s', '-n', $deploy->namespace, '--version', $deploy->chartRemote->version, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
             } else {
-                $cmd = [...$cmd, '--create-namespace', '-n', $deploy->namespace, '--version', $deploy->chartRemote->version, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
+                $cmd = [...$cmd, '--timeout', '5m0s', '--create-namespace', '-n', $deploy->namespace, '--version', $deploy->chartRemote->version, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
             }
 
             foreach (explode(' ', $values) as $word) {
@@ -172,9 +172,9 @@ class HelmTool
                     echo $response->body();
                     $response->throw();
                 }
-                $cmd = [...$cmd, '-n', $deploy->namespace, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
+                $cmd = [...$cmd, '--timeout', '5m0s', '-n', $deploy->namespace, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
             } else {
-                $cmd = [...$cmd, '--create-namespace', '-n', $deploy->namespace, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
+                $cmd = [...$cmd, '--timeout', '5m0s', '--create-namespace', '-n', $deploy->namespace, '--install', $installableEntityName.'-'.$deploy->appEnvironment];
             }
 
             foreach (explode(' ', $values) as $word) {
