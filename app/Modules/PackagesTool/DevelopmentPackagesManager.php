@@ -63,7 +63,7 @@ class DevelopmentPackagesManager
         file_put_contents($this->config->getWorkingDir() . '/php/composer.json', $resultJson);
 
         $podName = $this->kubernetesClusterManager->findPodByLabelsAndNamespace($this->config->getDevContainerLabels(), $this->config->getNamespace());
-        $this->kubernetesClusterManager->execDevCommand($this->config->getNamespace(), $podName, ['composer', 'require', $currentPackage->composerPackageName]);
+        return $this->kubernetesClusterManager->execDevCommand($this->config->getNamespace(), $podName, ['composer', 'require', $currentPackage->composerPackageName]);
 
 
     }
@@ -92,7 +92,7 @@ class DevelopmentPackagesManager
         file_put_contents($this->config->getWorkingDir() . '/php/composer.json', $resultJson);
 
         $podName = $this->kubernetesClusterManager->findPodByLabelsAndNamespace($this->config->getDevContainerLabels(), $this->config->getNamespace());
-        $this->kubernetesClusterManager->execDevCommand($this->config->getNamespace(), $podName, ['composer', 'require', $currentPackage->composerPackageName]);
+        return $this->kubernetesClusterManager->execDevCommand($this->config->getNamespace(), $podName, ['composer', 'require', $currentPackage->composerPackageName]);
     }
 
 

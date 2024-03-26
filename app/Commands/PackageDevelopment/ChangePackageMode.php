@@ -19,17 +19,17 @@ class ChangePackageMode extends Command
 
         if (!$currentPackage) {
             $this->error('Package not found');
-            return;
+            return 1;
         }
 
         $enabled = $developmentPackagesManager->detectIfPackageEnabledForDeveloping($currentPackage);
 
         if ($enabled) {
             $this->info('Re-installing Package in normal mode');
-            $developmentPackagesManager->installPackageInNormalMode($currentPackage);
+            return $developmentPackagesManager->installPackageInNormalMode($currentPackage);
         } else {
             $this->info('Enabling package for development');
-            $developmentPackagesManager->enablePackageForDeveloping($currentPackage);
+            return $developmentPackagesManager->enablePackageForDeveloping($currentPackage);
         }
 
 
