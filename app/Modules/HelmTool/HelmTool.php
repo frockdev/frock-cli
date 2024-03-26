@@ -122,6 +122,7 @@ class HelmTool
                 $cmd = [...$cmd, '--wait'];
             }
             if ($this->config->getNeedCreateRancherNamespace()) {
+                echo 'We are trying to create namespace '.$deploy->namespace.' in rancher...';
                 $response = Http::withHeader('Authorization', 'Bearer '.$this->config->getRancherToken())
                     ->post($this->config->getRancherFullUrl().'/v3/cluster/'.$this->config->getRancherClusterId().'/namespaces', [
                         'name' => $deploy->namespace,
