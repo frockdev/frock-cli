@@ -20,16 +20,16 @@ class HelmTool
         $this->config = $config;
     }
 
-    public function purge(Deploy $deploy, string $entityToPurge ) {
-        if ($this->config->getNeedCreateRancherNamespace()) {
-
-            $response = Http::withHeader('Authorization', 'Bearer '.$this->config->getRancherToken())
-                ->delete($this->config->getRancherFullUrl().'/v3/cluster/'.$this->config->getRancherClusterId().'/namespaces/'.$deploy->namespace);
-            if ($response->status()!=200) {
-                echo $response->body();
-                $response->throw();
-            }
+    private function rancherRemoveNamespace(string $namespace) {
+        $response = Http::withHeader('Authorization', 'Bearer '.$this->config->getRancherToken())
+            ->delete($this->config->getRancherFullUrl().'/v3/cluster/'.$this->config->getRancherClusterId().'/namespaces/'.$namespace);
+        if ($response->status()!=200) {
+            echo $response->body();
+            $response->throw();
         }
+    }
+
+    public function purge(Deploy $deploy, string $entityToPurge ) {
         $cmd = ['helm', 'uninstall', '-n', $deploy->namespace, $entityToPurge.'-'.$deploy->appEnvironment];
         $process = new Process($cmd);
         $process->setTty($this->config->getTtyEnabled());
@@ -40,20 +40,25 @@ class HelmTool
             } else {
                 echo $process->getOutput()."\n";
                 echo $process->getErrorOutput()."\n";
+                $this->rancherRemoveNamespace($deploy->namespace);
                 exit($process->getExitCode());
             }
         }
-        $cmd = ['kubectl', 'delete', 'ns', $deploy->namespace];
-        $process = new Process($cmd);
-        $process->setTty($this->config->getTtyEnabled());
-        $process->run();
-        if (!$this->config->getTtyEnabled()) {
-            if ($process->isSuccessful()) {
-                echo $process->getOutput()."\n";
-            } else {
-                echo $process->getOutput()."\n";
-                echo $process->getErrorOutput()."\n";
-                exit($process->getExitCode());
+        if ($this->config->getNeedCreateRancherNamespace()) {
+            $this->rancherRemoveNamespace($deploy->namespace);
+        } else {
+            $cmd = ['kubectl', 'delete', 'ns', $deploy->namespace];
+            $process = new Process($cmd);
+            $process->setTty($this->config->getTtyEnabled());
+            $process->run();
+            if (!$this->config->getTtyEnabled()) {
+                if ($process->isSuccessful()) {
+                    echo $process->getOutput()."\n";
+                } else {
+                    echo $process->getOutput()."\n";
+                    echo $process->getErrorOutput()."\n";
+                    exit($process->getExitCode());
+                }
             }
         }
     }
